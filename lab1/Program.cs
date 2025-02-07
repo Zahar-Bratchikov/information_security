@@ -45,7 +45,7 @@ class PasswordCrackerEstimator
         if (hasLower) size += 26;
         if (hasUpper) size += 26;
         if (hasDigits) size += 10;
-        if (hasSpecial) size += 32;
+        if (hasSpecial) size += 33;
 
         return size;
     }
