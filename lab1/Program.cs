@@ -9,61 +9,30 @@ class PasswordCrackerEstimator
         string password = Console.ReadLine();
 
         Console.Write("Введите скорость перебора (паролей в секунду): ");
-        if (!BigInteger.TryParse(Console.ReadLine(), out BigInteger speed) || speed <= 0)
-        {
-            Console.WriteLine("Ошибка: неверная скорость перебора.");
-            return;
-        }
+        BigInteger speed = BigInteger.Parse(Console.ReadLine());
 
         Console.Write("Введите количество неудачных попыток до паузы: ");
-        if (!BigInteger.TryParse(Console.ReadLine(), out BigInteger attemptsBeforePause) || attemptsBeforePause <= 0)
-        {
-            Console.WriteLine("Ошибка: неверное количество попыток.");
-            return;
-        }
+        BigInteger attemptsBeforePause = BigInteger.Parse(Console.ReadLine());
 
         Console.Write("Введите время паузы (в секундах): ");
-        if (!BigInteger.TryParse(Console.ReadLine(), out BigInteger pauseTime) || pauseTime < 0)
-        {
-            Console.WriteLine("Ошибка: неверное время паузы.");
-            return;
-        }
+        BigInteger pauseTime = BigInteger.Parse(Console.ReadLine());
 
         int alphabetSize = GetAlphabetSize(password);
-        Console.WriteLine($"Мощность алфавита: {alphabetSize}");
-
         BigInteger totalCombinations = BigInteger.Pow(alphabetSize, password.Length);
-        Console.WriteLine($"Общее количество возможных паролей: {totalCombinations}");
+        BigInteger baseTimeSeconds = totalCombinations / speed;
 
-        // Реальный подсчет времени перебора
-        BigInteger totalAttempts = totalCombinations;
-        BigInteger baseTimeSeconds = totalAttempts / speed;
-
-        // Корректный учёт пауз (только если кол-во попыток больше попыток до паузы)
-        BigInteger pauseCount = totalAttempts >= attemptsBeforePause
-            ? totalAttempts / attemptsBeforePause
-            : 0;
+        BigInteger pauseCount = (totalCombinations - 1) / attemptsBeforePause;
         BigInteger totalTimeSeconds = baseTimeSeconds + pauseCount * pauseTime;
 
-        // Конвертация времени в удобный формат
-        BigInteger years = totalTimeSeconds / (365 * 24 * 3600);
-        BigInteger remainingSeconds = totalTimeSeconds % (365 * 24 * 3600);
-        int months = (int)(remainingSeconds / (30 * 24 * 3600));
-        remainingSeconds %= 30 * 24 * 3600;
-        int days = (int)(remainingSeconds / (24 * 3600));
-        remainingSeconds %= 24 * 3600;
-        int hours = (int)(remainingSeconds / 3600);
-        remainingSeconds %= 3600;
-        int minutes = (int)(remainingSeconds / 60);
-        int seconds = (int)(remainingSeconds % 60);
-
-        Console.WriteLine($"Время подбора: {years} лет, {months} месяцев, {days} дней, " +
-                          $"{hours} часов, {minutes} минут, {seconds} секунд");
+        Console.WriteLine($"\nМощность алфавита: {alphabetSize}");
+        Console.WriteLine($"Общее количество возможных паролей: {totalCombinations}");
+        Console.WriteLine($"Примерное время подбора: {FormatTime(totalTimeSeconds)}");
     }
 
     static int GetAlphabetSize(string password)
     {
         bool hasLower = false, hasUpper = false, hasDigits = false, hasSpecial = false;
+        int size = 0;
 
         foreach (char c in password)
         {
@@ -73,12 +42,27 @@ class PasswordCrackerEstimator
             else hasSpecial = true;
         }
 
-        int size = 0;
         if (hasLower) size += 26;
         if (hasUpper) size += 26;
         if (hasDigits) size += 10;
         if (hasSpecial) size += 32;
 
         return size;
+    }
+
+    static string FormatTime(BigInteger totalSeconds)
+    {
+        BigInteger years = totalSeconds / (365 * 24 * 3600);
+        totalSeconds %= 365 * 24 * 3600;
+        int months = (int)(totalSeconds / (30 * 24 * 3600));
+        totalSeconds %= 30 * 24 * 3600;
+        int days = (int)(totalSeconds / (24 * 3600));
+        totalSeconds %= 24 * 3600;
+        int hours = (int)(totalSeconds / 3600);
+        totalSeconds %= 3600;
+        int minutes = (int)(totalSeconds / 60);
+        int seconds = (int)(totalSeconds % 60);
+
+        return $"{years} лет, {months} месяцев, {days} дней, {hours} часов, {minutes} минут, {seconds} секунд";
     }
 }
