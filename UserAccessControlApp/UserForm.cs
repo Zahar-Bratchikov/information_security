@@ -70,14 +70,5 @@ namespace UserAccessControl
                 MessageBox.Show("Incorrect old password.");
             }
         }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // Dispose managed resources here.
-            }
-            base.Dispose(disposing);
-        }
     }
 }

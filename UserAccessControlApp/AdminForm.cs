@@ -20,30 +20,38 @@ namespace UserAccessControl
             Text = "Admin Panel";
             Width = 500;
             Height = 400;
+            StartPosition = FormStartPosition.CenterScreen;
 
             lstUsers = new ListBox() { Top = 20, Left = 20, Width = 200, Height = 300 };
             LoadUsers();
 
-            txtOldPassword = new TextBox() { Top = 20, Left = 240, Width = 200, PasswordChar = '*' };
-            txtNewPassword = new TextBox() { Top = 60, Left = 240, Width = 200, PasswordChar = '*' };
-            txtConfirmPassword = new TextBox() { Top = 100, Left = 240, Width = 200, PasswordChar = '*' };
+            Label lblOldPassword = new Label() { Text = "Old Password", Top = 20, Left = 240, Width = 150 };
+            Label lblNewPassword = new Label() { Text = "New Password", Top = 60, Left = 240, Width = 150 };
+            Label lblConfirmPassword = new Label() { Text = "Confirm Password", Top = 100, Left = 240, Width = 150 };
 
-            btnChangePassword = new Button() { Text = "Change Password", Top = 140, Left = 240 };
+            txtOldPassword = new TextBox() { Top = 20, Left = 400, Width = 150, PasswordChar = '*' };
+            txtNewPassword = new TextBox() { Top = 60, Left = 400, Width = 150, PasswordChar = '*' };
+            txtConfirmPassword = new TextBox() { Top = 100, Left = 400, Width = 150, PasswordChar = '*' };
+
+            btnChangePassword = new Button() { Text = "Change Password", Top = 140, Left = 400, Width = 150 };
             btnChangePassword.Click += BtnChangePassword_Click;
 
-            btnAddUser = new Button() { Text = "Add User", Top = 180, Left = 240 };
+            btnAddUser = new Button() { Text = "Add User", Top = 180, Left = 400, Width = 150 };
             btnAddUser.Click += BtnAddUser_Click;
 
-            btnBlockUser = new Button() { Text = "Block User", Top = 220, Left = 240 };
+            btnBlockUser = new Button() { Text = "Block User", Top = 220, Left = 400, Width = 150 };
             btnBlockUser.Click += BtnBlockUser_Click;
 
-            btnSetPasswordRestrictions = new Button() { Text = "Set Password Restrictions", Top = 260, Left = 240 };
+            btnSetPasswordRestrictions = new Button() { Text = "Set Password Restrictions", Top = 260, Left = 400, Width = 150 };
             btnSetPasswordRestrictions.Click += BtnSetPasswordRestrictions_Click;
 
-            btnClose = new Button() { Text = "Close", Top = 300, Left = 240 };
+            btnClose = new Button() { Text = "Close", Top = 300, Left = 400, Width = 150 };
             btnClose.Click += (s, e) => { Application.Exit(); };
 
             Controls.Add(lstUsers);
+            Controls.Add(lblOldPassword);
+            Controls.Add(lblNewPassword);
+            Controls.Add(lblConfirmPassword);
             Controls.Add(txtOldPassword);
             Controls.Add(txtNewPassword);
             Controls.Add(txtConfirmPassword);
