@@ -13,23 +13,35 @@ namespace UserAccessControl
         public LoginForm()
         {
             Text = "Login";
-            Width = 300;
-            Height = 200;
+            Width = 400;
+            Height = 250;
+            StartPosition = FormStartPosition.CenterScreen;
 
-            Label lblName = new Label() { Text = "Name", Top = 20, Left = 20 };
-            Label lblPassword = new Label() { Text = "Password", Top = 60, Left = 20 };
+            TableLayoutPanel panel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 3,
+                Padding = new Padding(10),
+                AutoSize = true
+            };
 
-            txtName = new TextBox() { Top = 20, Left = 100, Width = 150 };
-            txtPassword = new TextBox() { Top = 60, Left = 100, Width = 150, PasswordChar = '*' };
+            Label lblName = new Label() { Text = "Name", AutoSize = true, Anchor = AnchorStyles.Right };
+            Label lblPassword = new Label() { Text = "Password", AutoSize = true, Anchor = AnchorStyles.Right };
 
-            btnLogin = new Button() { Text = "Login", Top = 100, Left = 100 };
+            txtName = new TextBox() { Anchor = AnchorStyles.Left, Width = 200 };
+            txtPassword = new TextBox() { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
+
+            btnLogin = new Button() { Text = "Login", Anchor = AnchorStyles.None, Width = 100 };
             btnLogin.Click += BtnLogin_Click;
 
-            Controls.Add(lblName);
-            Controls.Add(lblPassword);
-            Controls.Add(txtName);
-            Controls.Add(txtPassword);
-            Controls.Add(btnLogin);
+            panel.Controls.Add(lblName, 0, 0);
+            panel.Controls.Add(txtName, 1, 0);
+            panel.Controls.Add(lblPassword, 0, 1);
+            panel.Controls.Add(txtPassword, 1, 1);
+            panel.Controls.Add(btnLogin, 1, 2);
+
+            Controls.Add(panel);
         }
 
         private void BtnLogin_Click(object sender, EventArgs e)

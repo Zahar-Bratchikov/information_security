@@ -9,57 +9,95 @@ namespace UserAccessControl
         private TextBox txtNewPassword;
         private TextBox txtConfirmPassword;
         private TextBox txtOldPassword;
+        private TextBox txtMinLength;
         private Button btnChangePassword;
         private Button btnAddUser;
         private Button btnBlockUser;
-        private Button btnSetPasswordRestrictions;
         private Button btnClose;
+        private CheckBox chkLengthRestriction;
+        private CheckBox chkRequireUppercase;
+        private CheckBox chkRequireDigit;
+        private CheckBox chkRequireSpecialChar;
 
         public AdminForm()
         {
             Text = "Admin Panel";
-            Width = 500;
-            Height = 400;
+            Width = 600;
+            Height = 500;
             StartPosition = FormStartPosition.CenterScreen;
 
-            lstUsers = new ListBox() { Top = 20, Left = 20, Width = 200, Height = 300 };
+            TableLayoutPanel mainPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                Padding = new Padding(10),
+                AutoSize = true
+            };
+
+            lstUsers = new ListBox() { Dock = DockStyle.Fill };
+            lstUsers.SelectedIndexChanged += LstUsers_SelectedIndexChanged;
             LoadUsers();
 
-            Label lblOldPassword = new Label() { Text = "Old Password", Top = 20, Left = 240, Width = 150 };
-            Label lblNewPassword = new Label() { Text = "New Password", Top = 60, Left = 240, Width = 150 };
-            Label lblConfirmPassword = new Label() { Text = "Confirm Password", Top = 100, Left = 240, Width = 150 };
+            GroupBox grpActions = new GroupBox() { Text = "Actions", Dock = DockStyle.Fill, Padding = new Padding(10) };
+            TableLayoutPanel actionPanel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 10,
+                AutoSize = true
+            };
 
-            txtOldPassword = new TextBox() { Top = 20, Left = 400, Width = 150, PasswordChar = '*' };
-            txtNewPassword = new TextBox() { Top = 60, Left = 400, Width = 150, PasswordChar = '*' };
-            txtConfirmPassword = new TextBox() { Top = 100, Left = 400, Width = 150, PasswordChar = '*' };
+            Label lblOldPassword = new Label() { Text = "Old Password", AutoSize = true, Anchor = AnchorStyles.Right };
+            Label lblNewPassword = new Label() { Text = "New Password", AutoSize = true, Anchor = AnchorStyles.Right };
+            Label lblConfirmPassword = new Label() { Text = "Confirm Password", AutoSize = true, Anchor = AnchorStyles.Right };
+            Label lblMinLength = new Label() { Text = "Min Length", AutoSize = true, Anchor = AnchorStyles.Right };
 
-            btnChangePassword = new Button() { Text = "Change Password", Top = 140, Left = 400, Width = 150 };
+            txtOldPassword = new TextBox() { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
+            txtNewPassword = new TextBox() { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
+            txtConfirmPassword = new TextBox() { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
+            txtMinLength = new TextBox() { Anchor = AnchorStyles.Left, Width = 50 };
+
+            chkLengthRestriction = new CheckBox() { Text = "Enable Length Restriction", Anchor = AnchorStyles.Left, AutoSize = true };
+            chkRequireUppercase = new CheckBox() { Text = "Require Uppercase", Anchor = AnchorStyles.Left, AutoSize = true };
+            chkRequireDigit = new CheckBox() { Text = "Require Digit", Anchor = AnchorStyles.Left, AutoSize = true };
+            chkRequireSpecialChar = new CheckBox() { Text = "Require Special Character", Anchor = AnchorStyles.Left, AutoSize = true };
+
+            btnChangePassword = new Button() { Text = "Change Password", Anchor = AnchorStyles.None, Width = 150 };
             btnChangePassword.Click += BtnChangePassword_Click;
 
-            btnAddUser = new Button() { Text = "Add User", Top = 180, Left = 400, Width = 150 };
+            btnAddUser = new Button() { Text = "Add User", Anchor = AnchorStyles.None, Width = 150 };
             btnAddUser.Click += BtnAddUser_Click;
 
-            btnBlockUser = new Button() { Text = "Block User", Top = 220, Left = 400, Width = 150 };
+            btnBlockUser = new Button() { Text = "Block User", Anchor = AnchorStyles.None, Width = 150 };
             btnBlockUser.Click += BtnBlockUser_Click;
 
-            btnSetPasswordRestrictions = new Button() { Text = "Set Password Restrictions", Top = 260, Left = 400, Width = 150 };
-            btnSetPasswordRestrictions.Click += BtnSetPasswordRestrictions_Click;
-
-            btnClose = new Button() { Text = "Close", Top = 300, Left = 400, Width = 150 };
+            btnClose = new Button() { Text = "Close", Anchor = AnchorStyles.None, Width = 150 };
             btnClose.Click += (s, e) => { Application.Exit(); };
 
-            Controls.Add(lstUsers);
-            Controls.Add(lblOldPassword);
-            Controls.Add(lblNewPassword);
-            Controls.Add(lblConfirmPassword);
-            Controls.Add(txtOldPassword);
-            Controls.Add(txtNewPassword);
-            Controls.Add(txtConfirmPassword);
-            Controls.Add(btnChangePassword);
-            Controls.Add(btnAddUser);
-            Controls.Add(btnBlockUser);
-            Controls.Add(btnSetPasswordRestrictions);
-            Controls.Add(btnClose);
+            actionPanel.Controls.Add(lblOldPassword, 0, 0);
+            actionPanel.Controls.Add(txtOldPassword, 1, 0);
+            actionPanel.Controls.Add(lblNewPassword, 0, 1);
+            actionPanel.Controls.Add(txtNewPassword, 1, 1);
+            actionPanel.Controls.Add(lblConfirmPassword, 0, 2);
+            actionPanel.Controls.Add(txtConfirmPassword, 1, 2);
+            actionPanel.Controls.Add(lblMinLength, 0, 3);
+            actionPanel.Controls.Add(txtMinLength, 1, 3);
+            actionPanel.Controls.Add(chkLengthRestriction, 1, 4);
+            actionPanel.Controls.Add(chkRequireUppercase, 1, 5);
+            actionPanel.Controls.Add(chkRequireDigit, 1, 6);
+            actionPanel.Controls.Add(chkRequireSpecialChar, 1, 7);
+            actionPanel.Controls.Add(btnChangePassword, 1, 8);
+            actionPanel.Controls.Add(btnAddUser, 1, 9);
+            actionPanel.Controls.Add(btnBlockUser, 1, 10);
+            actionPanel.Controls.Add(btnClose, 1, 11);
+
+            grpActions.Controls.Add(actionPanel);
+
+            mainPanel.Controls.Add(lstUsers, 0, 0);
+            mainPanel.Controls.Add(grpActions, 1, 0);
+
+            Controls.Add(mainPanel);
         }
 
         private void LoadUsers()
@@ -68,6 +106,33 @@ namespace UserAccessControl
             foreach (var user in UserManager.Users)
             {
                 lstUsers.Items.Add(user.Name);
+            }
+        }
+
+        private void LstUsers_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lstUsers.SelectedItem != null)
+            {
+                string name = lstUsers.SelectedItem.ToString();
+                var user = UserManager.GetUser(name);
+                if (user != null)
+                {
+                    chkLengthRestriction.CheckedChanged -= ChkPasswordRestrictions_CheckedChanged;
+                    chkRequireUppercase.CheckedChanged -= ChkPasswordRestrictions_CheckedChanged;
+                    chkRequireDigit.CheckedChanged -= ChkPasswordRestrictions_CheckedChanged;
+                    chkRequireSpecialChar.CheckedChanged -= ChkPasswordRestrictions_CheckedChanged;
+
+                    chkLengthRestriction.Checked = user.PasswordRestrictions.EnableLengthRestriction;
+                    txtMinLength.Text = user.PasswordRestrictions.MinLength.ToString();
+                    chkRequireUppercase.Checked = user.PasswordRestrictions.RequireUppercase;
+                    chkRequireDigit.Checked = user.PasswordRestrictions.RequireDigit;
+                    chkRequireSpecialChar.Checked = user.PasswordRestrictions.RequireSpecialChar;
+
+                    chkLengthRestriction.CheckedChanged += ChkPasswordRestrictions_CheckedChanged;
+                    chkRequireUppercase.CheckedChanged += ChkPasswordRestrictions_CheckedChanged;
+                    chkRequireDigit.CheckedChanged += ChkPasswordRestrictions_CheckedChanged;
+                    chkRequireSpecialChar.CheckedChanged += ChkPasswordRestrictions_CheckedChanged;
+                }
             }
         }
 
@@ -83,7 +148,7 @@ namespace UserAccessControl
                 return;
             }
 
-            if (!UserManager.ValidatePassword(newPassword, false))
+            if (!UserManager.ValidatePassword(newPassword, new PasswordRestrictions()))
             {
                 MessageBox.Show("Password does not meet the requirements.");
                 return;
@@ -123,13 +188,21 @@ namespace UserAccessControl
             }
         }
 
-        private void BtnSetPasswordRestrictions_Click(object sender, EventArgs e)
+        private void ChkPasswordRestrictions_CheckedChanged(object sender, EventArgs e)
         {
             if (lstUsers.SelectedItem != null)
             {
                 string name = lstUsers.SelectedItem.ToString();
-                UserManager.SetPasswordRestrictions(name, true);
-                MessageBox.Show($"Password restrictions are set for user {name}.");
+                var user = UserManager.GetUser(name);
+                if (user != null)
+                {
+                    user.PasswordRestrictions.EnableLengthRestriction = chkLengthRestriction.Checked;
+                    user.PasswordRestrictions.MinLength = int.Parse(txtMinLength.Text);
+                    user.PasswordRestrictions.RequireUppercase = chkRequireUppercase.Checked;
+                    user.PasswordRestrictions.RequireDigit = chkRequireDigit.Checked;
+                    user.PasswordRestrictions.RequireSpecialChar = chkRequireSpecialChar.Checked;
+                    UserManager.SaveUsers();
+                }
             }
         }
 

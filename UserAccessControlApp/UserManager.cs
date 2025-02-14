@@ -14,7 +14,7 @@ namespace UserAccessControl
         {
             if (!File.Exists(userFile))
             {
-                Users.Add(new User("ADMIN", "", false, false));
+                Users.Add(new User("ADMIN", "", false, new PasswordRestrictions()));
                 SaveUsers();
             }
             else
@@ -29,7 +29,7 @@ namespace UserAccessControl
             {
                 foreach (var user in Users)
                 {
-                    writer.WriteLine($"{user.Name},{user.Password},{user.IsBlocked},{user.PasswordRestrictions}");
+                    writer.WriteLine($"{user.Name},{user.Password},{user.IsBlocked},{user.PasswordRestrictions.EnableLengthRestriction},{user.PasswordRestrictions.MinLength},{user.PasswordRestrictions.RequireUppercase},{user.PasswordRestrictions.RequireDigit},{user.PasswordRestrictions.RequireSpecialChar}");
                 }
             }
         }
@@ -42,7 +42,14 @@ namespace UserAccessControl
                 while ((line = reader.ReadLine()) != null)
                 {
                     var parts = line.Split(',');
-                    Users.Add(new User(parts[0], parts[1], bool.Parse(parts[2]), bool.Parse(parts[3])));
+                    Users.Add(new User(parts[0], parts[1], bool.Parse(parts[2]), new PasswordRestrictions
+                    {
+                        EnableLengthRestriction = bool.Parse(parts[3]),
+                        MinLength = int.Parse(parts[4]),
+                        RequireUppercase = bool.Parse(parts[5]),
+                        RequireDigit = bool.Parse(parts[6]),
+                        RequireSpecialChar = bool.Parse(parts[7])
+                    }));
                 }
             }
         }
@@ -54,7 +61,7 @@ namespace UserAccessControl
 
         public static void AddUser(string name)
         {
-            Users.Add(new User(name, "", false, false));
+            Users.Add(new User(name, "", false, new PasswordRestrictions()));
             SaveUsers();
         }
 
@@ -68,7 +75,7 @@ namespace UserAccessControl
             }
         }
 
-        public static void SetPasswordRestrictions(string name, bool restrictions)
+        public static void SetPasswordRestrictions(string name, PasswordRestrictions restrictions)
         {
             var user = GetUser(name);
             if (user != null)
@@ -78,13 +85,18 @@ namespace UserAccessControl
             }
         }
 
-        public static bool ValidatePassword(string password, bool restrictions)
+        public static bool ValidatePassword(string password, PasswordRestrictions restrictions)
         {
-            if (!restrictions)
-                return true;
+            if (restrictions.EnableLengthRestriction && password.Length < restrictions.MinLength)
+                return false;
 
-            // Example restrictions: at least 8 characters, at least one number
-            if (password.Length < 8 || !password.Any(char.IsDigit))
+            if (restrictions.RequireUppercase && !password.Any(char.IsUpper))
+                return false;
+
+            if (restrictions.RequireDigit && !password.Any(char.IsDigit))
+                return false;
+
+            if (restrictions.RequireSpecialChar && !password.Any(ch => !char.IsLetterOrDigit(ch)))
                 return false;
 
             return true;

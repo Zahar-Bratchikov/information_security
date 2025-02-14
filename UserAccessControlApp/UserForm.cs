@@ -16,31 +16,43 @@ namespace UserAccessControl
         {
             currentUser = user;
             Text = "User Panel";
-            Width = 300;
-            Height = 200;
+            Width = 400;
+            Height = 300;
+            StartPosition = FormStartPosition.CenterScreen;
 
-            Label lblOldPassword = new Label() { Text = "Old Password", Top = 20, Left = 20 };
-            Label lblNewPassword = new Label() { Text = "New Password", Top = 60, Left = 20 };
-            Label lblConfirmPassword = new Label() { Text = "Confirm Password", Top = 100, Left = 20 };
+            TableLayoutPanel panel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 4,
+                Padding = new Padding(10),
+                AutoSize = true
+            };
 
-            txtOldPassword = new TextBox() { Top = 20, Left = 120, Width = 150, PasswordChar = '*' };
-            txtNewPassword = new TextBox() { Top = 60, Left = 120, Width = 150, PasswordChar = '*' };
-            txtConfirmPassword = new TextBox() { Top = 100, Left = 120, Width = 150, PasswordChar = '*' };
+            Label lblOldPassword = new Label() { Text = "Old Password", AutoSize = true, Anchor = AnchorStyles.Right };
+            Label lblNewPassword = new Label() { Text = "New Password", AutoSize = true, Anchor = AnchorStyles.Right };
+            Label lblConfirmPassword = new Label() { Text = "Confirm Password", AutoSize = true, Anchor = AnchorStyles.Right };
 
-            btnChangePassword = new Button() { Text = "Change Password", Top = 140, Left = 50 };
+            txtOldPassword = new TextBox() { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
+            txtNewPassword = new TextBox() { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
+            txtConfirmPassword = new TextBox() { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
+
+            btnChangePassword = new Button() { Text = "Change Password", Anchor = AnchorStyles.None, Width = 150 };
             btnChangePassword.Click += BtnChangePassword_Click;
 
-            btnClose = new Button() { Text = "Close", Top = 140, Left = 170 };
+            btnClose = new Button() { Text = "Close", Anchor = AnchorStyles.None, Width = 150 };
             btnClose.Click += (s, e) => { Application.Exit(); };
 
-            Controls.Add(lblOldPassword);
-            Controls.Add(lblNewPassword);
-            Controls.Add(lblConfirmPassword);
-            Controls.Add(txtOldPassword);
-            Controls.Add(txtNewPassword);
-            Controls.Add(txtConfirmPassword);
-            Controls.Add(btnChangePassword);
-            Controls.Add(btnClose);
+            panel.Controls.Add(lblOldPassword, 0, 0);
+            panel.Controls.Add(txtOldPassword, 1, 0);
+            panel.Controls.Add(lblNewPassword, 0, 1);
+            panel.Controls.Add(txtNewPassword, 1, 1);
+            panel.Controls.Add(lblConfirmPassword, 0, 2);
+            panel.Controls.Add(txtConfirmPassword, 1, 2);
+            panel.Controls.Add(btnChangePassword, 1, 3);
+            panel.Controls.Add(btnClose, 1, 4);
+
+            Controls.Add(panel);
         }
 
         private void BtnChangePassword_Click(object sender, EventArgs e)
@@ -69,6 +81,15 @@ namespace UserAccessControl
             {
                 MessageBox.Show("Incorrect old password.");
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Dispose managed resources here.
+            }
+            base.Dispose(disposing);
         }
     }
 }
