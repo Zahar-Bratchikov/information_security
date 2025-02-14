@@ -79,11 +79,15 @@ namespace UserAccessControl
 
             if (name == "ADMIN")
             {
-                new AdminForm().Show();
+                var adminForm = new AdminForm();
+                adminForm.FormClosed += (s, args) => this.Show();
+                adminForm.Show();
             }
             else
             {
-                new UserForm(user).Show();
+                var userForm = new UserForm(user);
+                userForm.FormClosed += (s, args) => this.Show();
+                userForm.Show();
             }
             Hide();
         }

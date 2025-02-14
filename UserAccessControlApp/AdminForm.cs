@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace UserAccessControl
@@ -13,7 +14,9 @@ namespace UserAccessControl
         private Button btnChangePassword;
         private Button btnAddUser;
         private Button btnBlockUser;
+        private Button btnUnblockUser;
         private Button btnClose;
+        private Button btnLogout;
         private CheckBox chkLengthRestriction;
         private CheckBox chkRequireUppercase;
         private CheckBox chkRequireDigit;
@@ -44,7 +47,7 @@ namespace UserAccessControl
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 10,
+                RowCount = 12,
                 AutoSize = true
             };
 
@@ -72,6 +75,12 @@ namespace UserAccessControl
             btnBlockUser = new Button() { Text = "Block User", Anchor = AnchorStyles.None, Width = 150 };
             btnBlockUser.Click += BtnBlockUser_Click;
 
+            btnUnblockUser = new Button() { Text = "Unblock User", Anchor = AnchorStyles.None, Width = 150 };
+            btnUnblockUser.Click += BtnUnblockUser_Click;
+
+            btnLogout = new Button() { Text = "Log Out", Anchor = AnchorStyles.None, Width = 150 };
+            btnLogout.Click += (s, e) => { Close(); };
+
             btnClose = new Button() { Text = "Close", Anchor = AnchorStyles.None, Width = 150 };
             btnClose.Click += (s, e) => { Application.Exit(); };
 
@@ -90,7 +99,9 @@ namespace UserAccessControl
             actionPanel.Controls.Add(btnChangePassword, 1, 8);
             actionPanel.Controls.Add(btnAddUser, 1, 9);
             actionPanel.Controls.Add(btnBlockUser, 1, 10);
-            actionPanel.Controls.Add(btnClose, 1, 11);
+            actionPanel.Controls.Add(btnUnblockUser, 1, 11);
+            actionPanel.Controls.Add(btnLogout, 1, 12);
+            actionPanel.Controls.Add(btnClose, 1, 13);
 
             grpActions.Controls.Add(actionPanel);
 
@@ -185,6 +196,16 @@ namespace UserAccessControl
                 string name = lstUsers.SelectedItem.ToString();
                 UserManager.BlockUser(name, true);
                 MessageBox.Show($"User {name} is blocked.");
+            }
+        }
+
+        private void BtnUnblockUser_Click(object sender, EventArgs e)
+        {
+            if (lstUsers.SelectedItem != null)
+            {
+                string name = lstUsers.SelectedItem.ToString();
+                UserManager.BlockUser(name, false);
+                MessageBox.Show($"User {name} is unblocked.");
             }
         }
 

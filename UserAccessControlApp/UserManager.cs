@@ -75,16 +75,6 @@ namespace UserAccessControl
             }
         }
 
-        public static void SetPasswordRestrictions(string name, PasswordRestrictions restrictions)
-        {
-            var user = GetUser(name);
-            if (user != null)
-            {
-                user.PasswordRestrictions = restrictions;
-                SaveUsers();
-            }
-        }
-
         public static bool ValidatePassword(string password, PasswordRestrictions restrictions)
         {
             if (restrictions.EnableLengthRestriction && password.Length < restrictions.MinLength)

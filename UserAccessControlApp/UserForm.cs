@@ -10,6 +10,7 @@ namespace UserAccessControl
         private TextBox txtConfirmPassword;
         private Button btnChangePassword;
         private Button btnClose;
+        private Button btnLogout;
         private User currentUser;
 
         public UserForm(User user)
@@ -24,7 +25,7 @@ namespace UserAccessControl
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 4,
+                RowCount = 5,
                 Padding = new Padding(10),
                 AutoSize = true
             };
@@ -40,6 +41,9 @@ namespace UserAccessControl
             btnChangePassword = new Button() { Text = "Change Password", Anchor = AnchorStyles.None, Width = 150 };
             btnChangePassword.Click += BtnChangePassword_Click;
 
+            btnLogout = new Button() { Text = "Log Out", Anchor = AnchorStyles.None, Width = 150 };
+            btnLogout.Click += (s, e) => { Close(); };
+
             btnClose = new Button() { Text = "Close", Anchor = AnchorStyles.None, Width = 150 };
             btnClose.Click += (s, e) => { Application.Exit(); };
 
@@ -50,7 +54,8 @@ namespace UserAccessControl
             panel.Controls.Add(lblConfirmPassword, 0, 2);
             panel.Controls.Add(txtConfirmPassword, 1, 2);
             panel.Controls.Add(btnChangePassword, 1, 3);
-            panel.Controls.Add(btnClose, 1, 4);
+            panel.Controls.Add(btnLogout, 1, 4);
+            panel.Controls.Add(btnClose, 1, 5);
 
             Controls.Add(panel);
         }
