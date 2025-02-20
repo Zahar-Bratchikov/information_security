@@ -372,14 +372,5 @@ namespace UserAccessControl
         {
             Close();
         }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // Dispose managed resources if needed.
-            }
-            base.Dispose(disposing);
-        }
     }
 }
