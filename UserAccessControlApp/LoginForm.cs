@@ -14,20 +14,23 @@ namespace UserAccessControl
         {
             Text = "Login";
             Width = 400;
-            Height = 250;
+            Height = 300;
             StartPosition = FormStartPosition.CenterScreen;
+            AutoScaleMode = AutoScaleMode.Dpi;
 
-            TableLayoutPanel panel = new TableLayoutPanel
+            // Use a TableLayoutPanel for a clean layout.
+            TableLayoutPanel panel = new TableLayoutPanel()
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 RowCount = 3,
-                Padding = new Padding(10),
-                AutoSize = true
+                Padding = new Padding(20),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink
             };
 
-            Label lblName = new Label() { Text = "Name", AutoSize = true, Anchor = AnchorStyles.Right };
-            Label lblPassword = new Label() { Text = "Password", AutoSize = true, Anchor = AnchorStyles.Right };
+            Label lblName = new Label() { Text = "Name:", AutoSize = true, Anchor = AnchorStyles.Right };
+            Label lblPassword = new Label() { Text = "Password:", AutoSize = true, Anchor = AnchorStyles.Right };
 
             txtName = new TextBox() { Anchor = AnchorStyles.Left, Width = 200 };
             txtPassword = new TextBox() { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
@@ -55,13 +58,11 @@ namespace UserAccessControl
                 MessageBox.Show("User not found.");
                 return;
             }
-
             if (user.IsBlocked)
             {
                 MessageBox.Show("User is blocked.");
                 return;
             }
-
             if (user.Password != password)
             {
                 loginAttempts++;
@@ -77,28 +78,10 @@ namespace UserAccessControl
                 return;
             }
 
-            if (name == "ADMIN")
-            {
-                var adminForm = new AdminForm();
-                adminForm.FormClosed += (s, args) => this.Show();
-                adminForm.Show();
-            }
-            else
-            {
-                var userForm = new UserForm(user);
-                userForm.FormClosed += (s, args) => this.Show();
-                userForm.Show();
-            }
+            MainForm mainForm = new MainForm(user);
+            mainForm.FormClosed += (s, args) => this.Show();
+            mainForm.Show();
             Hide();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // Dispose managed resources here.
-            }
-            base.Dispose(disposing);
         }
     }
 }

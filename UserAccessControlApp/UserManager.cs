@@ -14,6 +14,8 @@ namespace UserAccessControl
         {
             if (!File.Exists(userFile))
             {
+                // Create default ADMIN user with no restrictions.
+                // Note: In a production system, you should save a hash of the password.
                 Users.Add(new User("ADMIN", "", false, new PasswordRestrictions()));
                 SaveUsers();
             }
@@ -29,7 +31,12 @@ namespace UserAccessControl
             {
                 foreach (var user in Users)
                 {
-                    writer.WriteLine($"{user.Name},{user.Password},{user.IsBlocked},{user.PasswordRestrictions.EnableLengthRestriction},{user.PasswordRestrictions.MinLength},{user.PasswordRestrictions.RequireUppercase},{user.PasswordRestrictions.RequireDigit},{user.PasswordRestrictions.RequireSpecialChar}");
+                    writer.WriteLine($"{user.Name},{user.Password},{user.IsBlocked}," +
+                                     $"{user.PasswordRestrictions.EnableLengthRestriction}," +
+                                     $"{user.PasswordRestrictions.MinLength}," +
+                                     $"{user.PasswordRestrictions.RequireUppercase}," +
+                                     $"{user.PasswordRestrictions.RequireDigit}," +
+                                     $"{user.PasswordRestrictions.RequireSpecialChar}");
                 }
             }
         }
@@ -42,14 +49,19 @@ namespace UserAccessControl
                 while ((line = reader.ReadLine()) != null)
                 {
                     var parts = line.Split(',');
-                    Users.Add(new User(parts[0], parts[1], bool.Parse(parts[2]), new PasswordRestrictions
-                    {
-                        EnableLengthRestriction = bool.Parse(parts[3]),
-                        MinLength = int.Parse(parts[4]),
-                        RequireUppercase = bool.Parse(parts[5]),
-                        RequireDigit = bool.Parse(parts[6]),
-                        RequireSpecialChar = bool.Parse(parts[7])
-                    }));
+                    Users.Add(new User(
+                        parts[0],
+                        parts[1],
+                        bool.Parse(parts[2]),
+                        new PasswordRestrictions
+                        {
+                            EnableLengthRestriction = bool.Parse(parts[3]),
+                            MinLength = int.Parse(parts[4]),
+                            RequireUppercase = bool.Parse(parts[5]),
+                            RequireDigit = bool.Parse(parts[6]),
+                            RequireSpecialChar = bool.Parse(parts[7])
+                        }
+                    ));
                 }
             }
         }
