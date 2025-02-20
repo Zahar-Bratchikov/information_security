@@ -19,7 +19,7 @@ namespace UserAccessControl
         private ListBox lstUsers;
         private Button btnAddUser, btnBlockUser, btnUnblockUser, btnLogoutAdmin;
 
-        // Password Requirements controls within Admin Actions
+        // Password Requirements controls within Admin Actions tab
         private GroupBox gbPasswordRequirements;
         private CheckBox chkEnableLength;
         private TextBox txtMinLength;
@@ -52,7 +52,7 @@ namespace UserAccessControl
             tabControl.TabPages.Add(tabChangePassword);
             tabControl.TabPages.Add(tabAdminActions);
 
-            // Disable Admin tab controls if user is not ADMIN.
+            // If current user is not ADMIN disable the admin controls.
             if (currentUser.Name != "ADMIN")
             {
                 adminPanel.Enabled = false;
@@ -70,85 +70,77 @@ namespace UserAccessControl
 
         private void InitializeChangePasswordTab(TabPage tabPage)
         {
-            // Create a scrollable panel in case the window is small.
-            Panel scrollPanel = new Panel
+            // Use a TableLayoutPanel to center all elements.
+            TableLayoutPanel parentLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                AutoScroll = true
+                ColumnCount = 3,    // left, center, right
+                RowCount = 3        // top, center, bottom
             };
+            parentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+            parentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            parentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+            parentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            parentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            parentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
 
-            // Set up the TableLayoutPanel for inputs.
+            // Create a TableLayoutPanel for the change password form.
             TableLayoutPanel cpPanel = new TableLayoutPanel
             {
-                Dock = DockStyle.Top,
-                ColumnCount = 2,
                 AutoSize = true,
+                ColumnCount = 2,
+                RowCount = 4,
                 Padding = new Padding(20)
             };
-
             cpPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F));
             cpPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60F));
 
-            // Set row styles for three input rows.
+            // Row 0: Old Password
             cpPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
-            cpPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
-            cpPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
-
             Label lblOld = new Label { Text = "Old Password:", Anchor = AnchorStyles.Right, AutoSize = true };
-            Label lblNew = new Label { Text = "New Password:", Anchor = AnchorStyles.Right, AutoSize = true };
-            Label lblConfirm = new Label { Text = "Confirm Password:", Anchor = AnchorStyles.Right, AutoSize = true };
-
             txtOldPassword = new TextBox { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
-            txtNewPassword = new TextBox { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
-            txtConfirmPassword = new TextBox { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
-
             cpPanel.Controls.Add(lblOld, 0, 0);
             cpPanel.Controls.Add(txtOldPassword, 1, 0);
+
+            // Row 1: New Password
+            cpPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
+            Label lblNew = new Label { Text = "New Password:", Anchor = AnchorStyles.Right, AutoSize = true };
+            txtNewPassword = new TextBox { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
             cpPanel.Controls.Add(lblNew, 0, 1);
             cpPanel.Controls.Add(txtNewPassword, 1, 1);
+
+            // Row 2: Confirm Password
+            cpPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
+            Label lblConfirm = new Label { Text = "Confirm Password:", Anchor = AnchorStyles.Right, AutoSize = true };
+            txtConfirmPassword = new TextBox { Anchor = AnchorStyles.Left, Width = 200, PasswordChar = '*' };
             cpPanel.Controls.Add(lblConfirm, 0, 2);
             cpPanel.Controls.Add(txtConfirmPassword, 1, 2);
 
-            // Create a FlowLayoutPanel for the two buttons and center them below the inputs.
+            // Row 3: Buttons (increase height to 60 to ensure full visibility)
+            cpPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
             FlowLayoutPanel buttonPanel = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.LeftToRight,
                 AutoSize = true,
-                Anchor = AnchorStyles.None
+                Margin = new Padding(0, 5, 0, 0)
             };
-
+            // Adjust left margin on buttonPanel to align with text fields (approx 10px)
+            buttonPanel.Padding = new Padding(10, 0, 0, 0);
             btnChangePassword = new Button { Text = "Change Password", Width = 150 };
             btnChangePassword.Click += BtnChangePassword_Click;
             btnLogoutCP = new Button { Text = "Log Out", Width = 150 };
             btnLogoutCP.Click += BtnLogout_Click;
-
             buttonPanel.Controls.Add(btnChangePassword);
             buttonPanel.Controls.Add(btnLogoutCP);
 
-            // Create a parent panel to center the button panel.
-            Panel centerPanel = new Panel
-            {
-                Dock = DockStyle.Top,
-                AutoSize = true
-            };
-            centerPanel.Controls.Add(buttonPanel);
-            // Center the buttonPanel within centerPanel.
-            buttonPanel.Location = new Point((centerPanel.ClientSize.Width - buttonPanel.Width) / 2, 0);
-            buttonPanel.Anchor = AnchorStyles.Top;
+            // Place buttonPanel in column 1 (right side) of row 3.
+            cpPanel.Controls.Add(new Panel(), 0, 3); // empty panel in left cell
+            cpPanel.Controls.Add(buttonPanel, 1, 3);
 
-            // Enclose both input and button panels in a main vertical layout.
-            FlowLayoutPanel mainLayout = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                FlowDirection = FlowDirection.TopDown,
-                AutoSize = true,
-                WrapContents = false
-            };
-            mainLayout.Controls.Add(cpPanel);
-            mainLayout.Controls.Add(centerPanel);
+            // Add cpPanel into the center cell of parentLayout.
+            parentLayout.Controls.Add(cpPanel, 1, 1);
 
-            scrollPanel.Controls.Add(mainLayout);
-            tabPage.Controls.Add(scrollPanel);
+            tabPage.Controls.Add(parentLayout);
         }
 
         private void InitializeAdminActionsTab(TabPage tabPage)
@@ -160,11 +152,12 @@ namespace UserAccessControl
                 AutoScroll = true
             };
 
+            // Added extra bottom padding to ensure bottom button is fully visible.
             adminPanel = new Panel
             {
                 Dock = DockStyle.Top,
                 AutoSize = true,
-                Padding = new Padding(20)
+                Padding = new Padding(20, 20, 20, 60)
             };
 
             TableLayoutPanel adminLayout = new TableLayoutPanel
@@ -174,12 +167,18 @@ namespace UserAccessControl
                 AutoSize = true
             };
 
-            // Set equal width for three columns.
+            // Set equal width for each of the three columns.
             for (int i = 0; i < 3; i++)
                 adminLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
 
             // Header label spanning all columns.
-            lblAdminAccess = new Label { Text = "Admin Actions:", Anchor = AnchorStyles.Left, AutoSize = true, Font = new Font("Arial", 12, FontStyle.Bold) };
+            lblAdminAccess = new Label
+            {
+                Text = "Admin Actions:",
+                Anchor = AnchorStyles.Left,
+                AutoSize = true,
+                Font = new Font("Arial", 12, FontStyle.Bold)
+            };
             adminLayout.Controls.Add(lblAdminAccess, 0, 0);
             adminLayout.SetColumnSpan(lblAdminAccess, 3);
 
@@ -202,14 +201,19 @@ namespace UserAccessControl
             adminLayout.Controls.Add(btnUnblockUser, 2, 2);
 
             // GroupBox for password requirements.
-            gbPasswordRequirements = new GroupBox { Text = "Password Requirements", AutoSize = true, Dock = DockStyle.Top, Padding = new Padding(10) };
+            gbPasswordRequirements = new GroupBox
+            {
+                Text = "Password Requirements",
+                AutoSize = true,
+                Dock = DockStyle.Top,
+                Padding = new Padding(10)
+            };
             TableLayoutPanel reqLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 5,
                 AutoSize = true
             };
-
             for (int i = 0; i < 5; i++)
                 reqLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
 
@@ -224,14 +228,13 @@ namespace UserAccessControl
             chkRequireUppercase = new CheckBox { Text = "Require Uppercase", AutoSize = true, Anchor = AnchorStyles.Left };
             chkRequireDigit = new CheckBox { Text = "Require Digit", AutoSize = true, Anchor = AnchorStyles.Left };
             chkRequireSpecial = new CheckBox { Text = "Require Special", AutoSize = true, Anchor = AnchorStyles.Left };
-
             reqLayout.Controls.Add(lblMin, 0, 1);
             reqLayout.Controls.Add(txtMinLength, 1, 1);
             reqLayout.Controls.Add(chkRequireUppercase, 2, 1);
             reqLayout.Controls.Add(chkRequireDigit, 3, 1);
             reqLayout.Controls.Add(chkRequireSpecial, 4, 1);
 
-            // Third row: Update button spanning all columns.
+            // Third row: Update Requirements button spanning all columns.
             btnUpdateRequirements = new Button { Text = "Update Requirements", Anchor = AnchorStyles.None, Width = 150 };
             btnUpdateRequirements.Click += BtnUpdateRequirements_Click;
             reqLayout.Controls.Add(btnUpdateRequirements, 0, 2);
@@ -287,13 +290,11 @@ namespace UserAccessControl
                 MessageBox.Show("Passwords do not match.");
                 return;
             }
-
             if (!UserManager.ValidatePassword(newPass, currentUser.PasswordRestrictions))
             {
                 MessageBox.Show("Password does not meet the requirements.");
                 return;
             }
-
             if (UserManager.ChangePassword(currentUser.Name, oldPass, newPass))
                 MessageBox.Show("Password changed successfully.");
             else
