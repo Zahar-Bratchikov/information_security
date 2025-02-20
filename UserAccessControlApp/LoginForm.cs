@@ -1,7 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-
-namespace UserAccessControl
+﻿namespace UserAccessControl
 {
     public class LoginForm : Form
     {
