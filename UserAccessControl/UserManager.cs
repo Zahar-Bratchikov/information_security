@@ -14,7 +14,6 @@ namespace UserAccessControl
         {
             if (!File.Exists(userFile))
             {
-                // Create default ADMIN user with no restrictions.
                 Users.Add(new User("ADMIN", "", false, new PasswordRestrictions()));
                 SaveUsers();
             }

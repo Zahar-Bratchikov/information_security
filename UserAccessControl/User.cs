@@ -1,4 +1,6 @@
-﻿namespace UserAccessControl
+﻿using System;
+
+namespace UserAccessControl
 {
     public class PasswordRestrictions
     {
@@ -22,6 +24,11 @@
             Password = password;
             IsBlocked = isBlocked;
             PasswordRestrictions = restrictions;
+        }
+
+        public override string ToString()
+        {
+            return $"{Name}{(IsBlocked ? " (Blocked)" : "")}";
         }
     }
 }

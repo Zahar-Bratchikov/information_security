@@ -12,7 +12,6 @@ namespace UserAccessControl
             currentUser = user;
             Title = $"Main Window - Welcome {currentUser.Name}";
 
-            // If the user is not ADMIN, remove the Admin Actions tab.
             if (currentUser.Name != "ADMIN")
             {
                 adminTab.Visibility = Visibility.Hidden;
@@ -28,7 +27,7 @@ namespace UserAccessControl
         {
             lstUsers.Items.Clear();
             foreach (var user in UserManager.Users)
-                lstUsers.Items.Add(user.Name);
+                lstUsers.Items.Add(user);
         }
 
         private void BtnChangePassword_Click(object sender, RoutedEventArgs e)
@@ -55,8 +54,6 @@ namespace UserAccessControl
 
         private void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
-            // Instead of closing the program, open the LoginWindow
-            // A new LoginWindow instance will have empty inputs by default.
             LoginWindow loginWindow = new LoginWindow();
             loginWindow.Show();
             this.Close();
@@ -64,7 +61,6 @@ namespace UserAccessControl
 
         private void BtnAddUser_Click(object sender, RoutedEventArgs e)
         {
-            // Use custom InputDialog instead of VisualBasic's InputBox.
             InputDialog dlg = new InputDialog("Enter new user name:", "Add User");
             dlg.Owner = this;
             if (dlg.ShowDialog() == true)
@@ -86,14 +82,14 @@ namespace UserAccessControl
         {
             if (lstUsers.SelectedItem != null)
             {
-                string userName = lstUsers.SelectedItem.ToString();
-                if (userName == "ADMIN")
+                User selectedUser = lstUsers.SelectedItem as User;
+                if (selectedUser.Name == "ADMIN")
                 {
                     MessageBox.Show("Cannot block ADMIN.");
                     return;
                 }
-                UserManager.BlockUser(userName, true);
-                MessageBox.Show($"User {userName} is blocked.");
+                UserManager.BlockUser(selectedUser.Name, true);
+                MessageBox.Show($"User {selectedUser.Name} is blocked.");
                 LoadUsers();
             }
         }
@@ -102,9 +98,9 @@ namespace UserAccessControl
         {
             if (lstUsers.SelectedItem != null)
             {
-                string userName = lstUsers.SelectedItem.ToString();
-                UserManager.BlockUser(userName, false);
-                MessageBox.Show($"User {userName} is unblocked.");
+                User selectedUser = lstUsers.SelectedItem as User;
+                UserManager.BlockUser(selectedUser.Name, false);
+                MessageBox.Show($"User {selectedUser.Name} is unblocked.");
                 LoadUsers();
             }
         }
@@ -116,8 +112,8 @@ namespace UserAccessControl
                 MessageBox.Show("Please select a user to update requirements.");
                 return;
             }
-            string userName = lstUsers.SelectedItem.ToString();
-            var user = UserManager.GetUser(userName);
+            User selectedUser = lstUsers.SelectedItem as User;
+            var user = UserManager.GetUser(selectedUser.Name);
             if (user == null)
             {
                 MessageBox.Show("User not found.");
@@ -140,8 +136,8 @@ namespace UserAccessControl
         {
             if (lstUsers.SelectedItem != null)
             {
-                string userName = lstUsers.SelectedItem.ToString();
-                var user = UserManager.GetUser(userName);
+                User selectedUser = lstUsers.SelectedItem as User;
+                var user = UserManager.GetUser(selectedUser.Name);
                 if (user != null)
                 {
                     chkEnableLength.IsChecked = user.PasswordRestrictions.EnableLengthRestriction;
