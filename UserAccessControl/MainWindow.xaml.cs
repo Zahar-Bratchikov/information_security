@@ -15,7 +15,7 @@ namespace UserAccessControl
             // If the user is not ADMIN, remove the Admin Actions tab.
             if (currentUser.Name != "ADMIN")
             {
-                tabControl.Items.Remove(adminTab);
+                adminTab.Visibility = Visibility.Hidden;
             }
             else
             {
