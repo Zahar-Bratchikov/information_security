@@ -10,36 +10,29 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <!-- Layout grid for password change -->
+                    <!-- Layout for changing password -->
                     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <!-- Old Password -->
                             <RowDefinition Height="Auto"/>
-                            <!-- New Password -->
                             <RowDefinition Height="Auto"/>
-                            <!-- Password Estimation -->
+                            <!-- TextBlock для вывода оценки времени взлома пароля -->
                             <RowDefinition Height="Auto"/>
-                            <!-- Confirm Password -->
                             <RowDefinition Height="Auto"/>
-                            <!-- Buttons -->
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Old Password -->
                         <Label Content="Old Password:" Grid.Row="0" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
                         <PasswordBox x:Name="txtOldPassword" Grid.Row="0" Grid.Column="1" Width="200" Margin="5"/>
-                        <!-- New Password -->
                         <Label Content="New Password:" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
                         <PasswordBox x:Name="txtNewPassword" Grid.Row="1" Grid.Column="1" Width="200" Margin="5" PasswordChanged="TxtNewPassword_PasswordChanged"/>
-                        <!-- Password estimation output -->
+                        <!-- Output for password cracking time estimation -->
                         <TextBlock x:Name="txtPasswordEstimate" Grid.Row="2" Grid.Column="1" Margin="5" FontSize="12" Foreground="Blue" TextWrapping="Wrap"/>
-                        <!-- Confirm Password -->
                         <Label Content="Confirm Password:" Grid.Row="3" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
                         <PasswordBox x:Name="txtConfirmPassword" Grid.Row="3" Grid.Column="1" Width="200" Margin="5"/>
-                        <!-- Buttons -->
                         <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,10,0,0">
                             <Button Content="Change Password" Width="150" Margin="0,0,10,0" Click="BtnChangePassword_Click"/>
                             <Button Content="Logout" Width="150" Click="BtnLogout_Click"/>
@@ -94,7 +87,7 @@
                     <TextBlock Text="Brute Force Attack" Margin="0,0,0,5"/>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,10">
                         <Label Content="Max Length:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                        <TextBox x:Name="txtMaxLength" Width="50" VerticalAlignment="Center"/>
+                        <TextBox x:Name="txtBruteMaxLength" Width="50" VerticalAlignment="Center" Text="6"/>
                         <Button Content="Start Brute Force Attack" Width="200" Margin="10,0,0,0" Click="BtnStartBruteForceAttack_Click"/>
                         <Button Content="Stop Brute Force Attack" Width="200" Margin="10,0,0,0" Click="BtnStopBruteForce_Click"/>
                     </StackPanel>

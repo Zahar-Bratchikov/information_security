@@ -8,33 +8,33 @@ using System.Text.Json;
 
 namespace CrackPassword
 {
+    // Статический класс для управления пользователями
     public static class UserManager
     {
-        // List of all users
+        // Список всех пользователей
         public static List<User> Users { get; private set; } = new List<User>();
 
+        // Путь к файлу с данными пользователей
         private static string filePath = "users.json";
 
+        // Статический конструктор, загружающий пользователей при первом использовании класса
         static UserManager()
         {
             LoadUsers();
-            // If no users exist, add a default admin user.
+            // Если пользователей нет, создаём ADMIN с паролем "admin123"
             if (Users == null || Users.Count == 0)
             {
-                // Default admin user with password "admin123"
-                AddUser("ADMIN", "");
+                AddUser("ADMIN", "admin123");
             }
         }
 
-        // Returns the user object with the specified username
+        // Получение пользователя по имени (без учета регистра)
         public static User GetUser(string username)
         {
             return Users.FirstOrDefault(u => u.Name.Equals(username, StringComparison.OrdinalIgnoreCase));
         }
 
-        // Adds a new user with the given username and (plain-text) password.
-        // The password will be saved as a SHA256 hash.
-        // If no password is provided, an empty password is hashed.
+        // Добавление нового пользователя
         public static void AddUser(string username, string password = null)
         {
             string passHash = password != null ? ComputeHash(password) : ComputeHash("");
@@ -42,7 +42,7 @@ namespace CrackPassword
             SaveUsers();
         }
 
-        // Changes the password for the specified user after verifying that the old password is correct.
+        // Изменение пароля пользователя (после проверки старого пароля)
         public static bool ChangePassword(string username, string oldPassword, string newPassword)
         {
             var user = GetUser(username);
@@ -56,7 +56,7 @@ namespace CrackPassword
             return true;
         }
 
-        // Validates a password against the given set of restrictions.
+        // Проверка соответствия пароля заданным ограничениям
         public static bool ValidatePassword(string password, PasswordRestrictions restrictions)
         {
             if (restrictions.EnableLengthRestriction && password.Length < restrictions.MinLength)
@@ -70,7 +70,7 @@ namespace CrackPassword
             return true;
         }
 
-        // Blocks or unblocks the specified user.
+        // Блокировка или разблокировка пользователя
         public static void BlockUser(string username, bool block)
         {
             var user = GetUser(username);
@@ -81,14 +81,14 @@ namespace CrackPassword
             }
         }
 
-        // Saves all user data to a JSON file.
+        // Сохранение пользователей в JSON-файл
         public static void SaveUsers()
         {
             var json = JsonSerializer.Serialize(Users, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(filePath, json);
         }
 
-        // Loads user data from the JSON file.
+        // Загрузка пользователей из JSON-файла
         public static void LoadUsers()
         {
             if (File.Exists(filePath))
@@ -106,7 +106,7 @@ namespace CrackPassword
             }
         }
 
-        // Computes the SHA256 hash of the input string.
+        // Вычисление SHA256-хэша для заданной строки
         public static string ComputeHash(string input)
         {
             using (var sha256 = SHA256.Create())
@@ -115,9 +115,7 @@ namespace CrackPassword
                 byte[] hashBytes = sha256.ComputeHash(bytes);
                 var sb = new StringBuilder();
                 foreach (var b in hashBytes)
-                {
                     sb.Append(b.ToString("x2"));
-                }
                 return sb.ToString();
             }
         }

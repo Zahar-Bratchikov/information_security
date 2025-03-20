@@ -2,8 +2,10 @@
 
 namespace CrackPassword
 {
+    // Диалоговое окно для ввода значения (например, имя нового пользователя)
     public partial class InputDialog : Window
     {
+        // Ответ пользователя
         public string ResponseText { get; private set; }
 
         public InputDialog(string prompt, string title = "Input")
