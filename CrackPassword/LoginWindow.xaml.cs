@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using Microsoft.Win32; // Не забудьте добавить эту директиву для использования OpenFileDialog
+using Microsoft.Win32; // Для OpenFileDialog
 
 namespace CrackPassword
 {
@@ -27,7 +27,7 @@ namespace CrackPassword
         public LoginWindow()
         {
             InitializeComponent();
-            cmbCrackType.SelectedIndex = 0; // По умолчанию — Dictionary Attack
+            cmbCrackType.SelectedIndex = 1; 
         }
 
         // Обработка нажатия кнопки Login
@@ -138,8 +138,21 @@ namespace CrackPassword
             TimeSpan ts = crackingStopwatch.Elapsed;
             if (crackedPassword != null)
             {
-                MessageBox.Show($"Password cracked! The password is: {crackedPassword}\nTime: {ts.TotalSeconds:F3} sec\nSpeed: {(double)attempts / ts.TotalSeconds:F2} attempts/sec");
+                // Устанавливаем найденный пароль в поле для входа
                 txtPassword.Password = crackedPassword;
+                // Сначала открываем MainWindow
+                MainWindow mainWindow = new MainWindow(user);
+                mainWindow.Show();
+                // Затем, после загрузки MainWindow, выводим диалог с информацией о подборе пароля
+                await mainWindow.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    MessageBox.Show(mainWindow,
+                        $"Password cracked! The password is: {crackedPassword}\n" +
+                        $"Time: {ts.TotalSeconds:F3} sec\n" +
+                        $"Speed: {(double)attempts / ts.TotalSeconds:F2} attempts/sec",
+                        "Cracking Results");
+                }), DispatcherPriority.ApplicationIdle);
+                this.Close();
             }
             else
             {

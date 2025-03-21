@@ -18,12 +18,6 @@ namespace CrackPassword
     {
         private User currentUser;
 
-        // Поля для функционала подбора пароля во вкладке "Password Cracking"
-        private CancellationTokenSource crackCancellationTokenSource;
-        private Stopwatch crackingStopwatch;
-        private long attempts;
-        private bool isCracking = false;
-
         public MainWindow(User user)
         {
             InitializeComponent();
@@ -34,7 +28,7 @@ namespace CrackPassword
             if (!currentUser.Name.Equals("ADMIN", StringComparison.OrdinalIgnoreCase))
             {
                 tabControl.Items.Remove(adminTab);
-                tabControl.Items.Remove(passwordCrackingTab);
+                //tabControl.Items.Remove(passwordCrackingTab);
             }
             else
             {
@@ -193,7 +187,7 @@ namespace CrackPassword
             }
             int alphabetSize = GetAlphabetSize(password);
             BigInteger totalCombinations = BigInteger.Pow(alphabetSize, password.Length);
-            BigInteger speed = 155000; 
+            BigInteger speed = 150000; 
             BigInteger timeSec = totalCombinations / speed;
             string formattedTime = FormatTime(timeSec);
 
@@ -238,22 +232,6 @@ namespace CrackPassword
             int minutes = (int)(totalSeconds / 60);
             int seconds = (int)(totalSeconds % 60);
             return $"{years} years, {months} months, {days} days, {hours} hours, {minutes} minutes, {seconds} seconds";
-        }
-
-        // Методы для функционала во вкладке "Password Cracking"
-        private async void BtnStartDictionaryAttack_Click(object sender, RoutedEventArgs e)
-        {
-            // Реализуйте подбор по словарю для ADMIN аналогично LoginWindow
-        }
-
-        private async void BtnStartBruteForceAttack_Click(object sender, RoutedEventArgs e)
-        {
-            // Реализуйте подбор методом полного перебора для ADMIN аналогично LoginWindow
-        }
-
-        private void BtnStopBruteForce_Click(object sender, RoutedEventArgs e)
-        {
-            // Реализуйте отмену процесса перебора
         }
     }
 }

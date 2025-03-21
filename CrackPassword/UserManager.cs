@@ -21,10 +21,10 @@ namespace CrackPassword
         static UserManager()
         {
             LoadUsers();
-            // Если пользователей нет, создаём ADMIN с паролем "admin123"
+            // Если пользователей нет, создаём ADMIN'а"
             if (Users == null || Users.Count == 0)
             {
-                AddUser("ADMIN", "admin123");
+                AddUser("ADMIN", "");
             }
         }
 
