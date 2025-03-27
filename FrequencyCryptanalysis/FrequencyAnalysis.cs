@@ -5,13 +5,16 @@ namespace FrequencyCryptanalysis
 {
     public static class FrequencyAnalysis
     {
-        // Подсчитывает частотный анализ букв (учитываются только символы из русского алфавита)
+        // Define the alphabet constant here (not extracted to a separate file)
+        private const string Alphabet = "абвгдежзийклмнопрстуфхцчшщъыьэюяё";
+
+        // Returns letter frequency (only letters in Alphabet are considered)
         public static Dictionary<char, int> GetLetterFrequency(string text)
         {
             var freq = new Dictionary<char, int>();
             foreach (char ch in text.ToLower())
             {
-                if (AlphabetHelper.IsInAlphabet(ch))
+                if (Alphabet.IndexOf(ch) >= 0)
                 {
                     if (!freq.ContainsKey(ch))
                         freq[ch] = 0;
@@ -21,11 +24,11 @@ namespace FrequencyCryptanalysis
             return freq;
         }
 
-        // Подсчитывает частотный анализ биграмм (учитываются только буквы русского алфавита)
+        // Returns bigram frequency (only letters in Alphabet are used)
         public static Dictionary<string, int> GetBigramFrequency(string text)
         {
             var freq = new Dictionary<string, int>();
-            string filtered = new string(text.ToLower().Where(ch => AlphabetHelper.IsInAlphabet(ch)).ToArray());
+            string filtered = new string(text.ToLower().Where(ch => Alphabet.IndexOf(ch) >= 0).ToArray());
             for (int i = 0; i < filtered.Length - 1; i++)
             {
                 string bigram = filtered.Substring(i, 2);
@@ -36,22 +39,12 @@ namespace FrequencyCryptanalysis
             return freq;
         }
 
-        // Возвращает топ-N элементов по частоте из словаря
+        // Returns the top N items by frequency
         public static Dictionary<TKey, int> GetTopN<TKey>(Dictionary<TKey, int> dict, int n)
         {
             return dict.OrderByDescending(kv => kv.Value)
                        .Take(n)
                        .ToDictionary(kv => kv.Key, kv => kv.Value);
-        }
-    }
-
-    public static class AlphabetHelper
-    {
-        public static readonly string Alphabet = "абвгдежзийклмнопрстуфхцчшщъыьэюяё";
-
-        public static bool IsInAlphabet(char ch)
-        {
-            return Alphabet.IndexOf(ch) >= 0;
         }
     }
 }

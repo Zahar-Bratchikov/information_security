@@ -7,10 +7,13 @@ namespace FrequencyCryptanalysis
 {
     public static class VigenereAnalysis
     {
-        // Определяет длину ключа методом индекса совпадений
+        // Define the alphabet constant here
+        private const string Alphabet = "абвгдежзийклмнопрстуфхцчшщъыьэюяё";
+
+        // Determines the key length using the index of coincidence method
         public static int DetermineKeyLength(string cipherText, int maxKeyLength = 20)
         {
-            cipherText = new string(cipherText.ToLower().Where(ch => AlphabetHelper.IsInAlphabet(ch)).ToArray());
+            string filtered = new string(cipherText.ToLower().Where(ch => Alphabet.IndexOf(ch) >= 0).ToArray());
             double bestIC = 0;
             int bestKeyLength = 1;
             for (int keyLen = 1; keyLen <= maxKeyLength; keyLen++)
@@ -19,8 +22,8 @@ namespace FrequencyCryptanalysis
                 for (int i = 0; i < keyLen; i++)
                 {
                     string subtext = "";
-                    for (int j = i; j < cipherText.Length; j += keyLen)
-                        subtext += cipherText[j];
+                    for (int j = i; j < filtered.Length; j += keyLen)
+                        subtext += filtered[j];
                     icSum += CalculateIC(subtext);
                 }
                 double avgIC = icSum / keyLen;
@@ -33,7 +36,7 @@ namespace FrequencyCryptanalysis
             return bestKeyLength;
         }
 
-        // Вычисляет индекс совпадений для заданного текста
+        // Calculates the index of coincidence for a given text
         private static double CalculateIC(string text)
         {
             var freq = FrequencyAnalysis.GetLetterFrequency(text);
@@ -46,44 +49,92 @@ namespace FrequencyCryptanalysis
             return (double)ic / (N * (N - 1));
         }
 
-        // Определяет ключ шифротекста, зная длину ключа, используя частотный анализ
-        public static string DetermineKey(string cipherText, int keyLength, Dictionary<char, int> largeTextLetterFrequencies)
+        // Determines the key for the Vigenere cipher by combining analyses of letter and bigram frequencies.
+        public static string DetermineKey(string cipherText, int keyLength,
+            Dictionary<char, int> refLetterFreq, Dictionary<string, int> refBigramFreq)
         {
-            cipherText = new string(cipherText.ToLower().Where(ch => AlphabetHelper.IsInAlphabet(ch)).ToArray());
+            string filtered = new string(cipherText.ToLower().Where(ch => Alphabet.IndexOf(ch) >= 0).ToArray());
             StringBuilder keyBuilder = new StringBuilder();
             for (int i = 0; i < keyLength; i++)
             {
                 string subtext = "";
-                for (int j = i; j < cipherText.Length; j += keyLength)
-                    subtext += cipherText[j];
-                int shift = DetermineShiftForSubtext(subtext, largeTextLetterFrequencies);
-                keyBuilder.Append(AlphabetHelper.Alphabet[shift]);
+                for (int j = i; j < filtered.Length; j += keyLength)
+                    subtext += filtered[j];
+                int shift = DetermineShiftForSubtextCombined(subtext, refLetterFreq, refBigramFreq);
+                keyBuilder.Append(Alphabet[shift]);
             }
             return keyBuilder.ToString();
         }
 
-        // Вычисляет сдвиг для подстроки на основе частотного анализа 
-        // (ожидается, что открытый текст должен иметь "о" как наиболее частую букву)
-        public static int DetermineShiftForSubtext(string subText, Dictionary<char, int> largeTextLetterFrequencies)
+        // Determines the best shift for a given substring using a combined error metric for letters and bigrams.
+        public static int DetermineShiftForSubtextCombined(string subText,
+            Dictionary<char, int> refLetterFreq, Dictionary<string, int> refBigramFreq,
+            double weightLetter = 1.0, double weightBigram = 1.0)
         {
             if (string.IsNullOrEmpty(subText))
                 return 0;
-            var letterFreq = FrequencyAnalysis.GetLetterFrequency(subText);
-            if (!letterFreq.Any())
-                return 0;
-            char mostFrequent = letterFreq.OrderByDescending(kv => kv.Value).First().Key;
-            int idxSub = AlphabetHelper.Alphabet.IndexOf(mostFrequent);
-            int idxO = AlphabetHelper.Alphabet.IndexOf('о');
-            return (idxSub - idxO + AlphabetHelper.Alphabet.Length) % AlphabetHelper.Alphabet.Length;
+            int alphLength = Alphabet.Length;
+            double bestScore = double.MaxValue;
+            int bestShift = 0;
+            for (int shift = 0; shift < alphLength; shift++)
+            {
+                string shifted = ApplyShift(subText, shift);
+                var subLetterFreq = FrequencyAnalysis.GetLetterFrequency(shifted);
+                var subBigramFreq = FrequencyAnalysis.GetBigramFrequency(shifted);
+
+                double letterError = 0;
+                foreach (var kv in refLetterFreq)
+                {
+                    char letter = kv.Key;
+                    int refCount = kv.Value;
+                    int subCount = subLetterFreq.ContainsKey(letter) ? subLetterFreq[letter] : 0;
+                    letterError += Math.Abs(refCount - subCount);
+                }
+
+                double bigramError = 0;
+                foreach (var kv in refBigramFreq)
+                {
+                    string bigram = kv.Key;
+                    int refCount = kv.Value;
+                    int subCount = subBigramFreq.ContainsKey(bigram) ? subBigramFreq[bigram] : 0;
+                    bigramError += Math.Abs(refCount - subCount);
+                }
+
+                double totalError = weightLetter * letterError + weightBigram * bigramError;
+                if (totalError < bestScore)
+                {
+                    bestScore = totalError;
+                    bestShift = shift;
+                }
+            }
+            return bestShift;
         }
 
-        // Дешифрует шифротекст Виженера по заданному ключу
+        // Applies a reverse shift to the text using Alphabet
+        private static string ApplyShift(string text, int shift)
+        {
+            StringBuilder sb = new StringBuilder();
+            int alphLen = Alphabet.Length;
+            foreach (char ch in text)
+            {
+                int idx = Alphabet.IndexOf(ch);
+                if (idx == -1)
+                {
+                    sb.Append(ch);
+                    continue;
+                }
+                int newIndex = (idx - shift + alphLen) % alphLen;
+                sb.Append(Alphabet[newIndex]);
+            }
+            return sb.ToString();
+        }
+
         public static string Decrypt(string cipherText, string key)
         {
-            return VigenereCipher(cipherText, key, AlphabetHelper.Alphabet, decrypt: true);
+            return VigenereCipher(cipherText, key, Alphabet, decrypt: true);
         }
 
-        // Метод шифрования/дешифрования Виженера
+        // Vigenere cipher method for encryption/decryption
         public static string VigenereCipher(string text, string key, string alphabet, bool decrypt = false)
         {
             StringBuilder result = new StringBuilder();
@@ -117,11 +168,10 @@ namespace FrequencyCryptanalysis
             return result.ToString();
         }
 
-        // Генерирует алфавит для шифра Виженера (русский алфавит с буквой ё).
-        // Если randomize установлен, перемешивает буквы, иначе возвращает упорядоченный алфавит.
+        // Generates an alphabet for the Vigenere cipher; if randomize is true, the letters are shuffled.
         public static string GenerateAlphabet(bool randomize)
         {
-            char[] alph = AlphabetHelper.Alphabet.ToCharArray();
+            char[] alph = Alphabet.ToCharArray();
             if (randomize)
             {
                 Random rand = new Random();
@@ -130,13 +180,9 @@ namespace FrequencyCryptanalysis
             return new string(alph);
         }
 
-        // Генерирует квадрат Виженера для заданного алфавита и ключа.
-        // Первый столбец остается фиксированным – отсортированный алфавит.
-        // Если randomizeOthers == true, то для каждой строки остальные буквы (кроме первой) формируются
-        // случайным образом (алгоритм Фишера–Йетса), иначе используется циклический сдвиг.
+        // Generates the Vigenere square using the given alphabet and key.
         public static string GenerateVigenereSquare(string alphabet, string key, bool randomizeOthers = false)
         {
-            // Фиксированный первый столбец: отсортированный алфавит.
             char[] sortedAlphabetArr = alphabet.ToCharArray();
             Array.Sort(sortedAlphabetArr);
             string fixedColumn = new string(sortedAlphabetArr);
@@ -147,22 +193,17 @@ namespace FrequencyCryptanalysis
 
             for (int i = 0; i < len; i++)
             {
-                // Выводим фиксированную букву (первый столбец)
                 char fixedLetter = fixedColumn[i];
                 square.Append(fixedLetter);
                 square.Append(" | ");
-
-                // Формируем список оставшихся букв (исключая фиксированную)
                 List<char> remaining = new List<char>();
                 foreach (char ch in sortedAlphabetArr)
                 {
                     if (ch != fixedLetter)
                         remaining.Add(ch);
                 }
-
                 if (randomizeOthers)
                 {
-                    // Перемешиваем оставшиеся буквы алгоритмом Фишера–Йетса.
                     for (int j = remaining.Count - 1; j > 0; j--)
                     {
                         int k = rand.Next(j + 1);
@@ -173,15 +214,11 @@ namespace FrequencyCryptanalysis
                 }
                 else
                 {
-                    // Выполняем циклический сдвиг на i позиций.
                     int shift = i % remaining.Count;
                     remaining = remaining.Skip(shift).Concat(remaining.Take(shift)).ToList();
                 }
-
                 foreach (char ch in remaining)
-                {
                     square.Append(ch);
-                }
                 square.AppendLine();
             }
             return square.ToString();

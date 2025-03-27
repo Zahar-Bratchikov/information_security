@@ -14,6 +14,7 @@ namespace FrequencyCryptanalysis
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        // Charts binding properties
         private SeriesCollection _letterSeries;
         public SeriesCollection LetterSeries
         {
@@ -42,15 +43,11 @@ namespace FrequencyCryptanalysis
             set { _bigramLabels = value; OnPropertyChanged(nameof(BigramLabels)); }
         }
 
-        // Переменные для хранения загруженных текстов
+        // Loaded texts and frequency dictionaries
         private string cryptoText = "";
         private string largeText = "";
-
         private Dictionary<char, int> largeTextLetterFrequencies = new Dictionary<char, int>();
         private Dictionary<string, int> largeTextBigramFrequencies = new Dictionary<string, int>();
-
-        // Русский алфавит с буквой "ё"
-        public static readonly string Alphabet = "абвгдежзийклмнопрстуфхцчшщъыьэюяё";
 
         public MainWindow()
         {
@@ -62,13 +59,10 @@ namespace FrequencyCryptanalysis
         protected virtual void OnPropertyChanged(string propertyName = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        // Загрузка файла с шифротекстом (для криптоанализа)
+        // Loading crypt text
         private void LoadCryptFile_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dlg = new OpenFileDialog
-            {
-                Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*"
-            };
+            OpenFileDialog dlg = new OpenFileDialog { Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*" };
             if (dlg.ShowDialog() == true)
             {
                 FilePathTextBox.Text = dlg.FileName;
@@ -83,17 +77,13 @@ namespace FrequencyCryptanalysis
             }
         }
 
-        // Выполнение криптоанализа (Цезарь или Виженер)
-        // Изменение: при каждом запуске пытаемся перечитать файл с криптотекстом,
-        // чтобы использовать последние данные и актуальные частоты (те же, что и для построения графиков).
+        // Processing crypto text (decoding)
         private void ProcessCryptoText_Click(object sender, RoutedEventArgs e)
         {
-            // Попытка перечитать криптотекст из указанного файла
             if (!string.IsNullOrWhiteSpace(FilePathTextBox.Text) && File.Exists(FilePathTextBox.Text))
             {
                 cryptoText = File.ReadAllText(FilePathTextBox.Text, Encoding.UTF8);
             }
-
             if (string.IsNullOrWhiteSpace(cryptoText))
             {
                 CryptoResultTextBox.Text = "Текст не загружен.";
@@ -104,15 +94,11 @@ namespace FrequencyCryptanalysis
                 MessageBox.Show("Сначала загрузите большой текст для анализа частот.");
                 return;
             }
-
-            // Обновляем частотные данные, используя тот же большой текст,
-            // который используется для построения графиков
+            // Update frequency dictionaries
             largeTextLetterFrequencies = FrequencyAnalysis.GetLetterFrequency(largeText);
             largeTextBigramFrequencies = FrequencyAnalysis.GetBigramFrequency(largeText);
-
             string mode = ((ComboBoxItem)ModeComboBox.SelectedItem).Content.ToString();
             StringBuilder sb = new StringBuilder();
-
             if (mode == "Цезарь")
             {
                 int key = CaesarAnalysis.DetermineKey(cryptoText, largeTextLetterFrequencies);
@@ -124,8 +110,6 @@ namespace FrequencyCryptanalysis
             }
             else if (mode == "Виженер")
             {
-                // Если используется рандомизация алфавита, автоматический криптоанализ не поддерживается,
-                // поскольку метод частотного анализа рассчитан на фиксированный (отсортированный) алфавит.
                 if (RandomizeAlphabet?.IsChecked ?? false)
                 {
                     sb.AppendLine("При включенной рандомизации алфавита автоматическое определение ключа невозможно.");
@@ -135,7 +119,8 @@ namespace FrequencyCryptanalysis
                 {
                     int keyLength = VigenereAnalysis.DetermineKeyLength(cryptoText);
                     sb.AppendLine($"Определённая длина ключа: {keyLength}");
-                    string key = VigenereAnalysis.DetermineKey(cryptoText, keyLength, largeTextLetterFrequencies);
+                    // Pass both letter and bigram frequencies
+                    string key = VigenereAnalysis.DetermineKey(cryptoText, keyLength, largeTextLetterFrequencies, largeTextBigramFrequencies);
                     sb.AppendLine($"Предполагаемый ключ: {key}");
                     sb.AppendLine();
                     string plainText = VigenereAnalysis.Decrypt(cryptoText, key);
@@ -146,13 +131,10 @@ namespace FrequencyCryptanalysis
             CryptoResultTextBox.Text = sb.ToString();
         }
 
-        // Загрузка большого текста для анализа частот
+        // Loading large text (for frequency analysis)
         private void LoadLargeTextFile_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dlg = new OpenFileDialog
-            {
-                Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*"
-            };
+            OpenFileDialog dlg = new OpenFileDialog { Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*" };
             if (dlg.ShowDialog() == true)
             {
                 LargeTextFilePathTextBox.Text = dlg.FileName;
@@ -169,7 +151,7 @@ namespace FrequencyCryptanalysis
             }
         }
 
-        // Построение графиков для частот букв и биграмм
+        // Drawing charts for frequencies
         private void DrawCharts_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(largeText))
@@ -189,10 +171,8 @@ namespace FrequencyCryptanalysis
             }
             var letterFreq = FrequencyAnalysis.GetLetterFrequency(largeText);
             var topLetters = FrequencyAnalysis.GetTopN(letterFreq, 10).ToList();
-
             var bigramFreq = FrequencyAnalysis.GetBigramFrequency(largeText);
             var topBigrams = FrequencyAnalysis.GetTopN(bigramFreq, 10).ToList();
-
             if (!topLetters.Any() || !topBigrams.Any())
             {
                 MessageBox.Show("Недостаточно данных для построения графиков.");
@@ -217,20 +197,17 @@ namespace FrequencyCryptanalysis
             OnPropertyChanged(nameof(BigramSeries));
         }
 
-        // Открытие файла (режим шифрования)
+        // File open for encryption tab
         private void OpenFile_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dlg = new OpenFileDialog
-            {
-                Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*"
-            };
+            OpenFileDialog dlg = new OpenFileDialog { Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*" };
             if (dlg.ShowDialog() == true)
             {
                 InputFilePath.Text = dlg.FileName;
             }
         }
 
-        // Режим шифрования/дешифрования Цезаря
+        // Caesar cipher encryption/decryption
         private void CaesarProcess_Click(object sender, RoutedEventArgs e)
         {
             string filePath = InputFilePath.Text;
@@ -266,7 +243,7 @@ namespace FrequencyCryptanalysis
                                  $"Расшифрованный: {File.ReadLines(decFilePath, Encoding.UTF8).First()}";
         }
 
-        // Режим шифрования/дешифрования Виженера
+        // Vigenere cipher encryption/decryption
         private void VigenereProcess_Click(object sender, RoutedEventArgs e)
         {
             string filePath = InputFilePath.Text;
@@ -276,7 +253,6 @@ namespace FrequencyCryptanalysis
                 return;
             }
             string key = VigenereKey.Text;
-            // Если установлен флаг рандомизации, генерируем рандомизированный алфавит для шифрования и дешифрования.
             bool randomizeAlphabetFlag = RandomizeAlphabet?.IsChecked ?? false;
             string encFilePath = $"encV_{Path.GetFileNameWithoutExtension(filePath)}.txt";
             string decFilePath = $"decV_{Path.GetFileNameWithoutExtension(filePath)}.txt";
@@ -291,9 +267,7 @@ namespace FrequencyCryptanalysis
                 MessageBox.Show("Входной файл должен содержать не менее 2000 символов.");
                 return;
             }
-            // Генерируем алфавит с учетом рандомизации.
             string alphabet = VigenereAnalysis.GenerateAlphabet(randomizeAlphabetFlag);
-            // Шифруем и дешифруем текст методом Виженера с использованием того же алфавита.
             string encryptedText = VigenereAnalysis.VigenereCipher(text, key, alphabet);
             File.WriteAllText(encFilePath, encryptedText, Encoding.UTF8);
             string decryptedText = VigenereAnalysis.VigenereCipher(encryptedText, key, alphabet, decrypt: true);
@@ -301,7 +275,6 @@ namespace FrequencyCryptanalysis
             OutputTextBox.Text = $"Оригинал: {File.ReadLines(filePath, Encoding.UTF8).First()}\n" +
                                  $"Зашифрованный: {File.ReadLines(encFilePath, Encoding.UTF8).First()}\n" +
                                  $"Расшифрованный: {File.ReadLines(decFilePath, Encoding.UTF8).First()}";
-            // Генерируем и выводим квадрат Виженера с тем же алфавитом
             OutputTextBox.Text += $"\n\nКвадрат Виженера:\n{VigenereAnalysis.GenerateVigenereSquare(alphabet, key, randomizeOthers: randomizeAlphabetFlag)}";
         }
     }
