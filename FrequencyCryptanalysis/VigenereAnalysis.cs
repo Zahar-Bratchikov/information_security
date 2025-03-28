@@ -7,11 +7,10 @@ namespace FrequencyCryptanalysis
 {
     public static class VigenereAnalysis
     {
-        // Define the alphabet constant here
         private const string Alphabet = "абвгдежзийклмнопрстуфхцчшщъыьэюяё";
 
-        // Determines the key length using the index of coincidence method
-        public static int DetermineKeyLength(string cipherText, int maxKeyLength = 20)
+        // Определяет длину ключа, используя метод индекса совпадения
+        public static int DetermineKeyLength(string cipherText, int maxKeyLength = 33)
         {
             string filtered = new string(cipherText.ToLower().Where(ch => Alphabet.IndexOf(ch) >= 0).ToArray());
             double bestIC = 0;
@@ -36,7 +35,7 @@ namespace FrequencyCryptanalysis
             return bestKeyLength;
         }
 
-        // Calculates the index of coincidence for a given text
+        // Вычисляет индекс совпадения для данного текста
         private static double CalculateIC(string text)
         {
             var freq = FrequencyAnalysis.GetLetterFrequency(text);
@@ -49,7 +48,7 @@ namespace FrequencyCryptanalysis
             return (double)ic / (N * (N - 1));
         }
 
-        // Determines the key for the Vigenere cipher by combining analyses of letter and bigram frequencies.
+        // Определяет ключ для шифра Виженера, комбинируя анализ частот букв и биграмм.
         public static string DetermineKey(string cipherText, int keyLength,
             Dictionary<char, int> refLetterFreq, Dictionary<string, int> refBigramFreq)
         {
@@ -66,7 +65,7 @@ namespace FrequencyCryptanalysis
             return keyBuilder.ToString();
         }
 
-        // Determines the best shift for a given substring using a combined error metric for letters and bigrams.
+        // Определяет наилучший сдвиг для данной подстроки, используя комбинированную метрику ошибок для букв и биграмм.
         public static int DetermineShiftForSubtextCombined(string subText,
             Dictionary<char, int> refLetterFreq, Dictionary<string, int> refBigramFreq,
             double weightLetter = 1.0, double weightBigram = 1.0)
@@ -110,7 +109,7 @@ namespace FrequencyCryptanalysis
             return bestShift;
         }
 
-        // Applies a reverse shift to the text using Alphabet
+        // Применяет обратный сдвиг к тексту, используя Alphabet
         private static string ApplyShift(string text, int shift)
         {
             StringBuilder sb = new StringBuilder();
@@ -134,7 +133,7 @@ namespace FrequencyCryptanalysis
             return VigenereCipher(cipherText, key, Alphabet, decrypt: true);
         }
 
-        // Vigenere cipher method for encryption/decryption
+        // Метод шифра Виженера для шифрования/дешифрования
         public static string VigenereCipher(string text, string key, string alphabet, bool decrypt = false)
         {
             StringBuilder result = new StringBuilder();
@@ -168,7 +167,7 @@ namespace FrequencyCryptanalysis
             return result.ToString();
         }
 
-        // Generates an alphabet for the Vigenere cipher; if randomize is true, the letters are shuffled.
+        // Генерирует алфавит для шифра Виженера; если randomize равно true, буквы перемешиваются.
         public static string GenerateAlphabet(bool randomize)
         {
             char[] alph = Alphabet.ToCharArray();
@@ -180,7 +179,7 @@ namespace FrequencyCryptanalysis
             return new string(alph);
         }
 
-        // Generates the Vigenere square using the given alphabet and key.
+        // Генерирует квадрат Виженера, используя заданный алфавит и ключ.
         public static string GenerateVigenereSquare(string alphabet, string key, bool randomizeOthers = false)
         {
             char[] sortedAlphabetArr = alphabet.ToCharArray();
