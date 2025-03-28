@@ -9,12 +9,14 @@ namespace FrequencyCryptanalysis
     {
         private const string Alphabet = "абвгдежзийклмнопрстуфхцчшщъыьэюяё";
 
-        // Определяет длину ключа, используя метод индекса совпадения
         public static int DetermineKeyLength(string cipherText, int maxKeyLength = 33)
         {
             string filtered = new string(cipherText.ToLower().Where(ch => Alphabet.IndexOf(ch) >= 0).ToArray());
             double bestIC = 0;
             int bestKeyLength = 1;
+
+            double[,] keyLenIcValues = new double[maxKeyLength, 2];
+
             for (int keyLen = 1; keyLen <= maxKeyLength; keyLen++)
             {
                 double icSum = 0;
@@ -26,6 +28,10 @@ namespace FrequencyCryptanalysis
                     icSum += CalculateIC(subtext);
                 }
                 double avgIC = icSum / keyLen;
+
+                keyLenIcValues[keyLen - 1, 0] = keyLen;
+                keyLenIcValues[keyLen - 1, 1] = avgIC;
+
                 if (avgIC > bestIC)
                 {
                     bestIC = avgIC;
@@ -34,6 +40,7 @@ namespace FrequencyCryptanalysis
             }
             return bestKeyLength;
         }
+
 
         // Вычисляет индекс совпадения для данного текста
         private static double CalculateIC(string text)
