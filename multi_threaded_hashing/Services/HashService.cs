@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using multi_threaded_hashing.Services.Interfaces;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using multi_threaded_hashing.Models;
-using multi_threaded_hashing.Services.Interfaces;
 
 namespace multi_threaded_hashing.Services
 {
@@ -51,7 +45,7 @@ namespace multi_threaded_hashing.Services
         public async Task<string> ComputeHashAsync(string input, Models.HashAlgorithm algorithm, int threadCount, CancellationToken cancellationToken)
         {
             // Увеличиваем объем работы, чтобы заметить разницу от многопоточности
-            const int hashIterations = 10000; 
+            const int hashIterations = 10000;
             string originalInput = input;
 
             // Создаем большой объем входных данных

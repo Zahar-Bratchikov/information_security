@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using multi_threaded_hashing.Models;
+﻿using multi_threaded_hashing.Models;
 using multi_threaded_hashing.Services.Interfaces;
 using System.Windows;
 
@@ -54,13 +49,13 @@ namespace multi_threaded_hashing.Services
                         break;
 
                     var result = await BruteForceLength(
-                        alphabetArray, 
-                        length, 
-                        settings.TargetHash, 
-                        settings.ThreadCount, 
-                        settings.Algorithm, 
+                        alphabetArray,
+                        length,
+                        settings.TargetHash,
+                        settings.ThreadCount,
+                        settings.Algorithm,
                         _cancellationTokenSource.Token);
-                    
+
                     if (!string.IsNullOrEmpty(result))
                     {
                         return result;
@@ -77,15 +72,15 @@ namespace multi_threaded_hashing.Services
         }
 
         private async Task<string> BruteForceLength(
-            char[] alphabet, 
-            int length, 
-            string targetHash, 
-            int threadCount, 
-            HashAlgorithm algorithm, 
+            char[] alphabet,
+            int length,
+            string targetHash,
+            int threadCount,
+            HashAlgorithm algorithm,
             CancellationToken cancellationToken)
         {
             var totalCombinations = (long)Math.Pow(alphabet.Length, length);
-            
+
             // Если поток только один, используем прямой перебор
             if (threadCount <= 1)
             {
@@ -94,7 +89,7 @@ namespace multi_threaded_hashing.Services
 
             // Оптимизируем количество потоков
             int effectiveThreadCount = OptimizeThreadCount(threadCount, totalCombinations);
-            
+
             // Комбинации на поток
             var combinationsPerThread = totalCombinations / effectiveThreadCount;
 
@@ -104,12 +99,12 @@ namespace multi_threaded_hashing.Services
                 var startIndex = i * combinationsPerThread;
                 var endIndex = (i == effectiveThreadCount - 1) ? totalCombinations : startIndex + combinationsPerThread;
                 tasks.Add(Task.Run(() => BruteForceRange(
-                    alphabet, 
-                    length, 
-                    targetHash, 
-                    algorithm, 
-                    startIndex, 
-                    endIndex, 
+                    alphabet,
+                    length,
+                    targetHash,
+                    algorithm,
+                    startIndex,
+                    endIndex,
                     cancellationToken)));
             }
 
@@ -118,7 +113,7 @@ namespace multi_threaded_hashing.Services
             {
                 var completedTask = await Task.WhenAny(tasks);
                 tasks.Remove(completedTask);
-                
+
                 var result = await completedTask;
                 if (!string.IsNullOrEmpty(result))
                 {
@@ -144,12 +139,12 @@ namespace multi_threaded_hashing.Services
         }
 
         private async Task<string> BruteForceRange(
-            char[] alphabet, 
-            int length, 
-            string targetHash, 
-            HashAlgorithm algorithm, 
-            long startIndex, 
-            long endIndex, 
+            char[] alphabet,
+            int length,
+            string targetHash,
+            HashAlgorithm algorithm,
+            long startIndex,
+            long endIndex,
             CancellationToken cancellationToken)
         {
             // Проверяем на возможное переполнение
@@ -232,7 +227,7 @@ namespace multi_threaded_hashing.Services
                 long maxAttempts = EstimateMaxAttempts();
 
                 // Ограничиваем прогресс до 100%
-                int progress = (int)Math.Min(100, (_totalAttempts * 100) / Math.Max(1, maxAttempts));
+                int progress = (int)Math.Min(100, _totalAttempts * 100 / Math.Max(1, maxAttempts));
 
                 var args = new BruteForceProgressEventArgs
                 {
