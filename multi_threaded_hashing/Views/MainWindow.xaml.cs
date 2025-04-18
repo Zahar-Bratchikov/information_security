@@ -1,14 +1,5 @@
-﻿using System;
+﻿using multi_threaded_hashing.ViewModels;
 using System.Windows;
-using System.Windows.Threading;
-using System.Diagnostics;
-using System.Threading;
-using System.ComponentModel;
-using multi_threaded_hashing.Services;
-using multi_threaded_hashing.Services.Interfaces;
-using multi_threaded_hashing.ViewModels;
-using LiveCharts;
-using LiveCharts.Wpf;
 
 namespace multi_threaded_hashing.Views
 {
@@ -36,7 +27,7 @@ namespace multi_threaded_hashing.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при инициализации окна: {ex.Message}\n\nStack trace: {ex.StackTrace}", 
+                MessageBox.Show($"Ошибка при инициализации окна: {ex.Message}\n\nStack trace: {ex.StackTrace}",
                     "Ошибка инициализации", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw; // Пробрасываем исключение дальше для отладки
             }

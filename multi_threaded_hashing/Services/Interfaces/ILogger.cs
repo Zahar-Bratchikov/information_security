@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace multi_threaded_hashing.Services.Interfaces
+﻿namespace multi_threaded_hashing.Services.Interfaces
 {
     public interface ILogger
     {

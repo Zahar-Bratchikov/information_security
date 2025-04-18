@@ -1,4 +1,3 @@
-using System;
 using System.Windows.Input;
 
 namespace multi_threaded_hashing.Commands
@@ -30,4 +29,4 @@ namespace multi_threaded_hashing.Commands
             _execute();
         }
     }
-} 
+}

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using multi_threaded_hashing.Models;
+﻿using multi_threaded_hashing.Models;
 
 namespace multi_threaded_hashing.Services.Interfaces
 {

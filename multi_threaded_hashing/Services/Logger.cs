@@ -1,5 +1,4 @@
-﻿using System;
-using multi_threaded_hashing.Services.Interfaces;
+﻿using multi_threaded_hashing.Services.Interfaces;
 
 namespace multi_threaded_hashing.Services
 {

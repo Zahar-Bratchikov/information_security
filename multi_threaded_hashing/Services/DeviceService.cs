@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using multi_threaded_hashing.Models;
+﻿using multi_threaded_hashing.Models;
 using multi_threaded_hashing.Services.Interfaces;
 using System.Runtime.InteropServices;
 
@@ -42,7 +38,7 @@ namespace multi_threaded_hashing.Services
             try
             {
                 var processorCount = Environment.ProcessorCount;
-                
+
                 // Обновляем информацию о процессоре
                 var cpuDevice = _devices.FirstOrDefault(d => d.Name == "CPU");
                 if (cpuDevice != null)
@@ -50,7 +46,7 @@ namespace multi_threaded_hashing.Services
                     cpuDevice.Description = $"Процессор ({processorCount} ядер)";
                     cpuDevice.PerformanceScore = processorCount * 100;
                 }
-                
+
                 return await Task.FromResult(_devices.FindAll(d => d.IsAvailable));
             }
             catch (Exception ex)
@@ -64,7 +60,7 @@ namespace multi_threaded_hashing.Services
         {
             try
             {
-                string processorInfo = Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER") 
+                string processorInfo = Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER")
                     ?? "Информация о процессоре недоступна";
                 return await Task.FromResult(processorInfo);
             }

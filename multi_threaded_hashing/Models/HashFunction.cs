@@ -9,17 +9,17 @@
         /// Название хеш-функции
         /// </summary>
         public string Name { get; set; } = string.Empty;
-        
+
         /// <summary>
         /// Тип алгоритма хеширования
         /// </summary>
         public HashAlgorithm Algorithm { get; set; }
-        
+
         /// <summary>
         /// Размер выходного значения в битах
         /// </summary>
         public int OutputSize { get; set; }
-        
+
         /// <summary>
         /// Описание хеш-функции
         /// </summary>

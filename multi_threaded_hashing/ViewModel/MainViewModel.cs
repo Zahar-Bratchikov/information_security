@@ -1,21 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using LiveCharts;
+using LiveCharts.Wpf;
+using multi_threaded_hashing.Commands;
+using multi_threaded_hashing.Models;
+using multi_threaded_hashing.Services.Interfaces;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using multi_threaded_hashing.Models;
-using multi_threaded_hashing.Services;
-using multi_threaded_hashing.Services.Interfaces;
-using multi_threaded_hashing.Commands;
-using System.Windows;
-using LiveCharts;
-using LiveCharts.Wpf;
 using System.Management;
 using System.Runtime.InteropServices;
-using LiveCharts.Configurations;
+using System.Windows;
+using System.Windows.Input;
 
 namespace multi_threaded_hashing.ViewModels
 {
@@ -925,7 +918,7 @@ namespace multi_threaded_hashing.ViewModels
                 System.Windows.Application.Current.Dispatcher.Invoke(() => OnBruteForceProgressChanged(sender, e));
                 return;
             }
-            
+
             UpdateProgress(e);
 
             // Добавление результата производительности для графика
@@ -938,7 +931,7 @@ namespace multi_threaded_hashing.ViewModels
                 if (e.ElapsedTime.TotalSeconds % 5 < 1)
                 {
                     int testNumber = PerformanceResults.Count + 1;
-                    
+
                     var result = new PerformanceResult
                     {
                         DeviceId = SelectedDevice?.Id ?? "CPU-0",
@@ -1040,7 +1033,7 @@ namespace multi_threaded_hashing.ViewModels
             }
 
             ChartLabels = labels.Length > 0 ? labels : new string[] { "Нет данных" };
-            
+
             // Обновляем форматтер для показа времени в секундах
             ChartFormatter = value => $"{value:F2} сек";
         }
@@ -1123,14 +1116,14 @@ namespace multi_threaded_hashing.ViewModels
             // Проверяем, есть ли уже результат для этого количества потоков
             var results = new List<BruteForcePerformanceResult>(BruteForcePerformanceResults);
             var existingIndex = results.FindIndex(r => r.ThreadCount == threadCount);
-            
+
             var result = new BruteForcePerformanceResult
             {
                 ThreadCount = threadCount,
                 Duration = durationMs,
                 Algorithm = SelectedAlgorithm.ToString()
             };
-            
+
             if (existingIndex >= 0)
             {
                 results[existingIndex] = result;
@@ -1139,7 +1132,7 @@ namespace multi_threaded_hashing.ViewModels
             {
                 results.Add(result);
             }
-            
+
             BruteForcePerformanceResults = results.OrderBy(r => r.ThreadCount).ToList();
             UpdateBruteForceChartSeries();
         }
@@ -1228,20 +1221,20 @@ namespace multi_threaded_hashing.ViewModels
 
                 var results = new List<BruteForcePerformanceResult>();
                 var maxThreads = Math.Min(Environment.ProcessorCount, 8); // Ограничиваем количество потоков
-                
+
                 // Определяем небольшой хеш для тестирования
                 var testHash = await _hashService.ComputeHashStringAsync("test", SelectedAlgorithm);
-                
+
                 // Сохраняем оригинальные настройки
                 var originalHash = TargetHash;
                 var originalMinLength = MinLength;
                 var originalMaxLength = MaxLength;
-                
+
                 // Устанавливаем тестовые параметры - для быстрого тестирования
                 TargetHash = testHash;
                 MinLength = 1;
                 MaxLength = 4;
-                
+
                 for (int threads = 1; threads <= maxThreads; threads++)
                 {
                     if (_cancellationTokenSource.Token.IsCancellationRequested)
@@ -1249,10 +1242,10 @@ namespace multi_threaded_hashing.ViewModels
 
                     Status = $"Тестирование брутфорса ({threads} потоков)...";
                     LogText += $"Тестирование брутфорса: {threads} потоков\n";
-                    
+
                     // Устанавливаем количество потоков для этого прохода
                     ThreadCount = threads;
-                    
+
                     // Запускаем тестовый брутфорс с ограниченным временем
                     var startTime = DateTime.Now;
                     bool timeout = false;
@@ -1265,7 +1258,7 @@ namespace multi_threaded_hashing.ViewModels
                         MinLength = MinLength,
                         MaxLength = MaxLength
                     };
-                    
+
                     // Создаем таймаут для теста - не более 10 секунд на каждый тест
                     using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
                     using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
@@ -1287,10 +1280,10 @@ namespace multi_threaded_hashing.ViewModels
                             }
                         }
                     }
-                    
+
                     var endTime = DateTime.Now;
                     var duration = (endTime - startTime).TotalMilliseconds;
-                    
+
                     if (!timeout)
                     {
                         results.Add(new BruteForcePerformanceResult
@@ -1311,33 +1304,33 @@ namespace multi_threaded_hashing.ViewModels
                             Algorithm = SelectedAlgorithm.ToString()
                         });
                     }
-                    
+
                     // Обновляем прогресс
                     ProgressValue = (int)((double)threads / maxThreads * 100);
-                    
+
                     // Небольшая пауза между тестами
                     await Task.Delay(500, _cancellationTokenSource.Token);
                 }
-                
+
                 // Восстанавливаем оригинальные настройки
                 TargetHash = originalHash;
                 MinLength = originalMinLength;
                 MaxLength = originalMaxLength;
-                
+
                 // Сохраняем результаты и обновляем график
                 BruteForcePerformanceResults = results;
                 UpdateBruteForceChartSeries();
-                
+
                 Status = "Тестирование производительности брутфорса завершено";
                 LogText += $"Тестирование производительности брутфорса завершено\n";
-                
+
                 // Определяем оптимальное количество потоков
                 if (results.Count > 0)
                 {
                     var optimalResult = results.OrderBy(r => r.Duration).First();
                     LogText += $"Лучший результат: {optimalResult.ThreadCount} потоков - {optimalResult.Duration:F2} мс\n";
                     LogText += $"Рекомендуемое количество потоков для брутфорса: {optimalResult.ThreadCount}\n";
-                    
+
                     // Устанавливаем оптимальное количество потоков
                     ThreadCount = optimalResult.ThreadCount;
                 }

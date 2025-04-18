@@ -1,10 +1,9 @@
-﻿using System.Windows;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using multi_threaded_hashing.Services;
 using multi_threaded_hashing.Services.Interfaces;
 using multi_threaded_hashing.ViewModels;
 using multi_threaded_hashing.Views;
-using System;
+using System.Windows;
 using System.Windows.Threading;
 
 namespace multi_threaded_hashing;
@@ -30,9 +29,9 @@ public partial class App : Application
     private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         // Показываем сообщение об ошибке
-        MessageBox.Show($"Возникло необработанное исключение: {e.Exception.Message}\n\nStack trace: {e.Exception.StackTrace}", 
+        MessageBox.Show($"Возникло необработанное исключение: {e.Exception.Message}\n\nStack trace: {e.Exception.StackTrace}",
             "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-        
+
         // Помечаем исключение как обработанное, чтобы приложение не закрылось
         e.Handled = true;
     }
@@ -41,7 +40,7 @@ public partial class App : Application
     {
         if (e.ExceptionObject is Exception ex)
         {
-            MessageBox.Show($"Критическая ошибка: {ex.Message}\n\nStack trace: {ex.StackTrace}", 
+            MessageBox.Show($"Критическая ошибка: {ex.Message}\n\nStack trace: {ex.StackTrace}",
                 "Критическая ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -50,22 +49,22 @@ public partial class App : Application
     {
         // Регистрируем логгер
         services.AddSingleton<ILogger, ConsoleLogger>();
-        
+
         // Регистрируем сервисы
         services.AddSingleton<IDeviceService, DeviceService>();
         services.AddSingleton<IHashService, HashService>();
-        services.AddSingleton<IBruteForceService>(provider => 
+        services.AddSingleton<IBruteForceService>(provider =>
             new BruteForceService(provider.GetRequiredService<IHashService>()));
-        
+
         // Регистрируем ViewModel
-        services.AddSingleton<MainViewModel>(provider => 
+        services.AddSingleton<MainViewModel>(provider =>
             new MainViewModel(
                 provider.GetRequiredService<IBruteForceService>(),
                 provider.GetRequiredService<IHashService>(),
                 provider.GetRequiredService<IDeviceService>(),
                 provider.GetRequiredService<ILogger>()
             ));
-        
+
         // Регистрируем MainWindow
         services.AddSingleton<MainWindow>();
     }
@@ -80,7 +79,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Ошибка при запуске приложения: {ex.Message}\n\nStack trace: {ex.StackTrace}", 
+            MessageBox.Show($"Ошибка при запуске приложения: {ex.Message}\n\nStack trace: {ex.StackTrace}",
                 "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
