@@ -1,0 +1,206 @@
+<Window x:Class="BruteForceAnalyzer.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        xmlns:local="clr-namespace:BruteForceAnalyzer.Views"
+        mc:Ignorable="d"
+        Title="Анализатор производительности хеширования и брутфорса" Height="700" Width="1100">
+    
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <TabControl Grid.Row="0" Margin="0,0,0,10">
+            <TabItem Header="Информация о системе">
+                <Grid Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Процессор:" FontWeight="Bold" Margin="5"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ProcessorInfo}" Margin="5"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Количество ядер:" FontWeight="Bold" Margin="5"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ProcessorCount}" Margin="5"/>
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Операционная система:" FontWeight="Bold" Margin="5"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding OsInfo}" Margin="5"/>
+                </Grid>
+            </TabItem>
+            
+            <TabItem Header="Хеширование">
+                <Grid Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Текст для хеширования:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding InputText}" 
+                             Margin="5" Height="60" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Алгоритм хеширования:" VerticalAlignment="Center" Margin="5"/>
+                    <ComboBox Grid.Row="1" Grid.Column="1" Margin="5" 
+                              ItemsSource="{Binding AvailableAlgorithms}"
+                              SelectedItem="{Binding SelectedAlgorithm}"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="Количество потоков:" VerticalAlignment="Center" Margin="5"/>
+                    <ComboBox Grid.Row="1" Grid.Column="3" Margin="5"
+                              ItemsSource="{Binding AvailableThreadCounts}"
+                              SelectedItem="{Binding SelectedThreadCount}"/>
+                    
+                    <Button Grid.Row="2" Grid.Column="1" Content="Начать хеширование" 
+                            Command="{Binding ComputeHashCommand}" Margin="5" Height="30"/>
+                    
+                    <Button Grid.Row="2" Grid.Column="3" Content="Остановить" 
+                            Command="{Binding StopHashingCommand}" Margin="5" Height="30"/>
+                    
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Результат хеширования:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding HashResult}" 
+                             IsReadOnly="True" Margin="5"/>
+                    
+                    <Button Grid.Row="3" Grid.Column="3" Content="Использовать для брутфорса" 
+                            Command="{Binding UseHashForBruteForceCommand}" Margin="5"/>
+                    
+                    <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4" 
+                            Content="Запустить тест производительности с разным количеством потоков" 
+                            Command="{Binding RunPerformanceTestCommand}" Margin="5" Height="30"/>
+                    
+                    <DataGrid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4" Margin="5" Height="150"
+                              ItemsSource="{Binding HashingPerformanceResults}" 
+                              AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Потоки" Binding="{Binding ThreadCount}" Width="*"/>
+                            <DataGridTextColumn Header="Время (мс)" Binding="{Binding Duration, StringFormat='{}{0:F2}'}" Width="*"/>
+                            <DataGridTextColumn Header="Хешей в секунду" Binding="{Binding HashesPerSecond, StringFormat='{}{0:F2}'}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            
+            <TabItem Header="Брутфорс">
+                <Grid Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Настройки хеширования -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Алгоритм хеширования:" VerticalAlignment="Center" Margin="5"/>
+                    <ComboBox Grid.Row="0" Grid.Column="1" Margin="5" 
+                              ItemsSource="{Binding AvailableAlgorithms}"
+                              SelectedItem="{Binding SelectedAlgorithm}"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Хеш для поиска:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Margin="5" Text="{Binding TargetHash}"/>
+                    
+                    <!-- Настройки брутфорса -->
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Алфавит:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="0" Grid.Column="3" Margin="5" Text="{Binding Alphabet}"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="Мин. длина:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="1" Grid.Column="3" Margin="5" Text="{Binding MinLength}"/>
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Макс. длина:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Margin="5" Text="{Binding MaxLength}"/>
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="Количество потоков:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="2" Grid.Column="3" Margin="5" Text="{Binding ThreadCount}"/>
+                    
+                    <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Content="Запустить брутфорс" 
+                            Command="{Binding StartBruteForceCommand}" Margin="5" Height="30"/>
+                    
+                    <Button Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2" Content="Остановить" 
+                            Command="{Binding StopBruteForceCommand}" Margin="5" Height="30"/>
+                    
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Найденный пароль:" VerticalAlignment="Center" Margin="5" FontWeight="Bold"/>
+                    <TextBlock Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding FoundPassword}" 
+                               Margin="5" FontWeight="Bold" Foreground="Green"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        
+        <TabControl Grid.Row="1" Margin="0,0,0,10">
+            <TabItem Header="Прогресс">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <ProgressBar Grid.Row="0" Height="20" Margin="10" Value="{Binding ProgressValue}"/>
+                    
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10">
+                        <TextBlock Text="Текущая попытка: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding CurrentAttempt}" Margin="5,0,15,0"/>
+                        
+                        <TextBlock Text="Затраченное время: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding ElapsedTime}" Margin="5,0,15,0"/>
+                        
+                        <TextBlock Text="Попыток в секунду: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding AttemptsPerSecond, StringFormat='{}{0:N0}'}" Margin="5,0,15,0"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            
+            <TabItem Header="График хеширования">
+                <lvc:CartesianChart Series="{Binding HashingChartSeries}" LegendLocation="Right">
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Title="Количество потоков" Labels="{Binding HashingChartLabels}"/>
+                    </lvc:CartesianChart.AxisX>
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="Время (мс)" LabelFormatter="{Binding HashingChartFormatter}"/>
+                    </lvc:CartesianChart.AxisY>
+                </lvc:CartesianChart>
+            </TabItem>
+            
+            <TabItem Header="График брутфорса">
+                <lvc:CartesianChart Name="PerformanceChart" Series="{Binding ChartSeries}" LegendLocation="Right">
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Title="Тест" Labels="{Binding ChartLabels}"/>
+                    </lvc:CartesianChart.AxisX>
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="Хешей в секунду" LabelFormatter="{Binding ChartFormatter}"/>
+                    </lvc:CartesianChart.AxisY>
+                </lvc:CartesianChart>
+            </TabItem>
+        </TabControl>
+        
+        <GroupBox Header="Лог" Grid.Row="2" Height="150">
+            <TextBox Text="{Binding LogText}" IsReadOnly="True" VerticalScrollBarVisibility="Auto" 
+                     HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12"/>
+        </GroupBox>
+    </Grid>
+</Window> 
