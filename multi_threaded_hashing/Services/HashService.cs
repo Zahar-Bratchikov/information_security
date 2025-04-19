@@ -36,27 +36,77 @@ namespace multi_threaded_hashing.Services
             return BitConverter.ToString(hash).Replace("-", "").ToLower();
         }
 
-        public async Task<byte[][]> ComputeHashesParallelAsync(string[] inputs, Models.HashAlgorithm algorithm, int threadCount)
+        public async Task<byte[][]> ComputeHashesParallelAsync(string[] inputs, Models.HashAlgorithm algorithm, int threadCount, CancellationToken cancellationToken = default)
         {
-            var tasks = inputs.Select(input => ComputeHashAsync(input, algorithm));
-            return await Task.WhenAll(tasks);
+            if (inputs == null || inputs.Length == 0)
+                return Array.Empty<byte[]>();
+            
+            // Если входных данных меньше чем threadCount, используем количество потоков равное количеству строк
+            int effectiveThreadCount = Math.Min(inputs.Length, threadCount);
+            
+            // Если запрошен только один поток или всего один элемент, используем простой подход
+            if (effectiveThreadCount <= 1)
+            {
+                var tasks = inputs.Select(input => ComputeHashAsync(input, algorithm));
+                return await Task.WhenAll(tasks);
+            }
+            
+            // Разделяем входные данные на группы для параллельной обработки
+            var batches = new List<string[]>();
+            int batchSize = (inputs.Length + effectiveThreadCount - 1) / effectiveThreadCount; // Округление вверх
+            
+            for (int i = 0; i < inputs.Length; i += batchSize)
+            {
+                int count = Math.Min(batchSize, inputs.Length - i);
+                var batch = new string[count];
+                Array.Copy(inputs, i, batch, 0, count);
+                batches.Add(batch);
+            }
+            
+            // Создаем задачи для каждой группы
+            var batchTasks = new List<Task<List<byte[]>>>();
+            foreach (var batch in batches)
+            {
+                batchTasks.Add(Task.Run(async () =>
+                {
+                    var results = new List<byte[]>();
+                    foreach (var input in batch)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        
+                        results.Add(await Task.Run(() =>
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            using var hashAlgorithm = GetHashAlgorithm(algorithm);
+                            return hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(input));
+                        }, cancellationToken));
+                    }
+                    return results;
+                }, cancellationToken));
+            }
+            
+            // Ждем завершения всех групп и объединяем результаты
+            var batchResults = await Task.WhenAll(batchTasks);
+            
+            // Объединяем результаты всех групп в один массив
+            var results = new List<byte[]>();
+            foreach (var batchResult in batchResults)
+            {
+                results.AddRange(batchResult);
+            }
+            
+            return results.ToArray();
         }
 
         public async Task<string> ComputeHashAsync(string input, Models.HashAlgorithm algorithm, int threadCount, CancellationToken cancellationToken)
         {
-            // Увеличиваем объем работы, чтобы заметить разницу от многопоточности
-            const int hashIterations = 10000;
-            string originalInput = input;
-
-            // Создаем большой объем входных данных
-            if (input.Length < 10000)
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
+            
+            // Если запрошен только один поток или строка слишком короткая, используем обычный метод
+            if (threadCount <= 1 || input.Length < 1000)
             {
-                StringBuilder sb = new();
-                while (sb.Length < 10000)
-                {
-                    sb.Append(input);
-                }
-                input = sb.ToString();
+                return await ComputeHashStringAsync(input, algorithm);
             }
 
             byte[] inputBytes = Encoding.UTF8.GetBytes(input);
@@ -67,7 +117,7 @@ namespace multi_threaded_hashing.Services
                 cancellationToken.ThrowIfCancellationRequested();
 
                 // Разделяем данные на части для обработки разными потоками
-                int chunkSize = input.Length / threadCount;
+                int chunkSize = inputBytes.Length / threadCount;
                 List<byte[]> chunks = new();
 
                 for (int i = 0; i < threadCount; i++)
@@ -82,7 +132,7 @@ namespace multi_threaded_hashing.Services
                     chunks.Add(chunk);
                 }
 
-                // Вычисляем хеш для каждого сегмента много раз
+                // Вычисляем хеш для каждого сегмента параллельно
                 var tasks = new Task<byte[]>[chunks.Count];
                 for (int i = 0; i < chunks.Count; i++)
                 {
@@ -90,20 +140,8 @@ namespace multi_threaded_hashing.Services
                     tasks[i] = Task.Run(() =>
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-
-                        byte[] chunkBytes = chunks[chunkIndex];
-                        byte[] lastHash = chunkBytes;
-
                         using var hashAlgorithm = GetHashAlgorithm(algorithm);
-
-                        // Многократно хешируем для увеличения нагрузки
-                        for (int iter = 0; iter < hashIterations / threadCount; iter++)
-                        {
-                            cancellationToken.ThrowIfCancellationRequested();
-                            lastHash = hashAlgorithm.ComputeHash(lastHash);
-                        }
-
-                        return lastHash;
+                        return hashAlgorithm.ComputeHash(chunks[chunkIndex]);
                     }, cancellationToken);
                 }
 
@@ -122,8 +160,8 @@ namespace multi_threaded_hashing.Services
                 result = finalHashAlgorithm.ComputeHash(combinedBytes.ToArray());
             }, cancellationToken);
 
-            // Для тестирования возвращаем хеш оригинального ввода
-            return await ComputeHashStringAsync(originalInput, algorithm);
+            // Возвращаем результат финального хеширования в виде строки
+            return BitConverter.ToString(result).Replace("-", "").ToLower();
         }
 
         private System.Security.Cryptography.HashAlgorithm GetHashAlgorithm(Models.HashAlgorithm algorithm)
