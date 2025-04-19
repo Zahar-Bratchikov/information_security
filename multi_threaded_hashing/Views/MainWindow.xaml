@@ -35,9 +35,6 @@
 
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Количество ядер:" FontWeight="Bold" Margin="5"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ProcessorCount}" Margin="5"/>
-
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Операционная система:" FontWeight="Bold" Margin="5"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding OsInfo}" Margin="5"/>
                     </Grid>
                     
                     <!-- Лог -->
