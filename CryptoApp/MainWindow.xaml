@@ -29,7 +29,7 @@
         <!-- Строка 2: Ввод ключа Виженера и кнопка -->
         <Label Content="Ключ Виженера:" Grid.Row="2" Grid.Column="0" Margin="10,10,10,10"/>
         <TextBox Name="VigenereKey" Grid.Row="2" Grid.Column="1" Margin="189,10,0,10" HorizontalAlignment="Left" Width="289"/>
-        <CheckBox Name="RandomizeAlphabet" Content="Рандомизировать алфавит" Grid.Row="2" Margin="112,16,334,4" Grid.ColumnSpan="2"/>
+        <CheckBox Name="RandomizeAlphabet" Content="Рандомизировать алфавит" Grid.Row="2" Margin="112,16,383,18" Grid.ColumnSpan="2"/>
 
         <!-- Строка 3: Кнопка выполнения Виженера -->
         <Button Content="Выполнить Виженера" Grid.Row="2" Grid.Column="2" Margin="0,9,9,6" Click="VigenereProcess_Click" HorizontalAlignment="Right" Width="150"/>

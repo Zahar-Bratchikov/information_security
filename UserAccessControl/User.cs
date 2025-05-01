@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace UserAccessControl
+﻿namespace UserAccessControl
 {
     public class PasswordRestrictions
     {

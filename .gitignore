@@ -1,0 +1,37 @@
+# Build results
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code/Visual Studio
+.vscode/
+*.vs/
+*.ncb
+*.sdf
+*.opensdf
+*.cachefile
+
+# Packages
+packages/
+*.nupkg
+*.snupkg
+
+# Others
+*.log
+*.db
+*.DS_Store
+Thumbs.db
+
+# Office temporary files
+~$*
+
+# Reports and docs
+*.docx
+
+# Build logs
+buildlog.txt

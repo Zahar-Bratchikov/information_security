@@ -8,72 +8,131 @@ using System.Text.Json;
 
 namespace CrackPassword
 {
-    // Статический класс для управления пользователями
+    /// <summary>
+    /// Менеджер пользователей. Данные сохраняются в JSON‑файл.
+    /// Пароли хранятся как SHA256-хэш.
+    /// </summary>
     public static class UserManager
     {
-        // Список всех пользователей
-        public static List<User> Users { get; private set; } = new List<User>();
+        public static List<User> Users { get; set; }
+        // Имя файла для хранения пользователей
+        private static readonly string dataFile = "users.json";
 
-        // Путь к файлу с данными пользователей
-        private static string filePath = "users.json";
-
-        // Статический конструктор, загружающий пользователей при первом использовании класса
         static UserManager()
         {
             LoadUsers();
-            // Если пользователей нет, создаём ADMIN'а"
+            // Если список пустой, создаём ADMIN с пустым паролем
             if (Users == null || Users.Count == 0)
             {
-                AddUser("ADMIN", "");
+                Users = new List<User>
+                {
+                    new User
+                    {
+                        Name = "ADMIN",
+                        Password = ComputeHash(""),
+                        PasswordRestrictions = new PasswordRestrictions()
+                    }
+                };
+                SaveUsers();
             }
         }
 
-        // Получение пользователя по имени (без учета регистра)
-        public static User GetUser(string username)
+        // Загрузка данных из JSON-файла
+        public static void LoadUsers()
         {
-            return Users.FirstOrDefault(u => u.Name.Equals(username, StringComparison.OrdinalIgnoreCase));
+            if (File.Exists(dataFile))
+            {
+                try
+                {
+                    string json = File.ReadAllText(dataFile);
+                    Users = JsonSerializer.Deserialize<List<User>>(json);
+                }
+                catch (Exception ex)
+                {
+                    // Если произошла ошибка при чтении файла, создаём новый список пользователей
+                    Console.WriteLine("Ошибка загрузки пользователей: " + ex.Message);
+                    Users = new List<User>();
+                }
+            }
+            else
+            {
+                Users = new List<User>();
+            }
         }
 
-        // Добавление нового пользователя
-        public static void AddUser(string username, string password = null)
+        // Сохранение данных в JSON-файл
+        public static void SaveUsers()
         {
-            string passHash = password != null ? ComputeHash(password) : ComputeHash("");
-            Users.Add(new User { Name = username, PasswordHash = passHash, IsBlocked = false });
-            SaveUsers();
+            try
+            {
+                string json = JsonSerializer.Serialize(Users, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(dataFile, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка сохранения пользователей: " + ex.Message);
+            }
         }
 
-        // Изменение пароля пользователя (после проверки старого пароля)
-        public static bool ChangePassword(string username, string oldPassword, string newPassword)
+        // Получение пользователя по имени
+        public static User GetUser(string name)
         {
-            var user = GetUser(username);
-            if (user == null)
-                return false;
-            string oldHash = ComputeHash(oldPassword);
-            if (user.PasswordHash != oldHash)
-                return false;
-            user.PasswordHash = ComputeHash(newPassword);
-            SaveUsers();
-            return true;
+            return Users.FirstOrDefault(u => u.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         }
 
-        // Проверка соответствия пароля заданным ограничениям
+        // Проверка, соответствует ли введенный пароль сохранённому хэшу
+        public static bool VerifyPassword(string inputPassword, string storedHash)
+        {
+            return ComputeHash(inputPassword) == storedHash;
+        }
+
+        // Метод для хэширования пароля с использованием SHA256
+        private static string ComputeHash(string input)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+                return BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant();
+            }
+        }
+
+        // Метод для проверки соответствия нового пароля требованиям
         public static bool ValidatePassword(string password, PasswordRestrictions restrictions)
         {
+            if (restrictions == null)
+                return true;
             if (restrictions.EnableLengthRestriction && password.Length < restrictions.MinLength)
                 return false;
             if (restrictions.RequireUppercase && !password.Any(char.IsUpper))
                 return false;
             if (restrictions.RequireDigit && !password.Any(char.IsDigit))
                 return false;
-            if (restrictions.RequireSpecialChar && password.All(char.IsLetterOrDigit))
+            if (restrictions.RequireSpecialChar && !password.Any(c => !char.IsLetterOrDigit(c)))
                 return false;
             return true;
         }
 
-        // Блокировка или разблокировка пользователя
-        public static void BlockUser(string username, bool block)
+        // Смена пароля. Сравнивается введённый старый пароль (с хэшированием) с сохранённым.
+        public static bool ChangePassword(string userName, string oldPassword, string newPassword)
         {
-            var user = GetUser(username);
+            var user = GetUser(userName);
+            if (user != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"Проверка старого пароля: введено '{oldPassword}', ожидается хэш '{user.Password}'");
+                if (VerifyPassword(oldPassword, user.Password))
+                {
+                    user.Password = ComputeHash(newPassword);
+                    SaveUsers();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Блокировка пользователя
+        public static void BlockUser(string userName, bool block)
+        {
+            var user = GetUser(userName);
             if (user != null)
             {
                 user.IsBlocked = block;
@@ -81,43 +140,16 @@ namespace CrackPassword
             }
         }
 
-        // Сохранение пользователей в JSON-файл
-        public static void SaveUsers()
+        // Добавление нового пользователя. Пароль по умолчанию хэшируется.
+        public static void AddUser(string userName, string defaultPassword)
         {
-            var json = JsonSerializer.Serialize(Users, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(filePath, json);
-        }
-
-        // Загрузка пользователей из JSON-файла
-        public static void LoadUsers()
-        {
-            if (File.Exists(filePath))
+            Users.Add(new User
             {
-                var json = File.ReadAllText(filePath);
-                if (!string.IsNullOrWhiteSpace(json))
-                    Users = JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
-                else
-                    Users = new List<User>();
-            }
-            else
-            {
-                Users = new List<User>();
-                SaveUsers();
-            }
-        }
-
-        // Вычисление SHA256-хэша для заданной строки
-        public static string ComputeHash(string input)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                byte[] bytes = Encoding.UTF8.GetBytes(input);
-                byte[] hashBytes = sha256.ComputeHash(bytes);
-                var sb = new StringBuilder();
-                foreach (var b in hashBytes)
-                    sb.Append(b.ToString("x2"));
-                return sb.ToString();
-            }
+                Name = userName,
+                Password = ComputeHash(defaultPassword),
+                PasswordRestrictions = new PasswordRestrictions()
+            });
+            SaveUsers();
         }
     }
 }

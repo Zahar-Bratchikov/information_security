@@ -4,19 +4,19 @@
         Title="Main Window" Height="700" Width="900" WindowStartupLocation="CenterScreen">
     <Grid>
         <TabControl x:Name="tabControl">
-            <!-- Change Password Tab -->
+            <!-- Вкладка смены пароля -->
             <TabItem Header="Change Password" x:Name="changePasswordTab">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <!-- Layout for changing password -->
+                    <!-- Оформление формы смены пароля -->
                     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
-                            <!-- TextBlock для вывода оценки времени взлома пароля -->
+                            <!-- Текст для оценки времени взлома пароля -->
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -29,7 +29,7 @@
                         <PasswordBox x:Name="txtOldPassword" Grid.Row="0" Grid.Column="1" Width="200" Margin="5"/>
                         <Label Content="New Password:" Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
                         <PasswordBox x:Name="txtNewPassword" Grid.Row="1" Grid.Column="1" Width="200" Margin="5" PasswordChanged="TxtNewPassword_PasswordChanged"/>
-                        <!-- Output for password cracking time estimation -->
+                        <!-- Вывод оценки времени подбора нового пароля -->
                         <TextBlock x:Name="txtPasswordEstimate" Grid.Row="2" Grid.Column="1" Margin="5" FontSize="12" Foreground="Blue" TextWrapping="Wrap"/>
                         <Label Content="Confirm Password:" Grid.Row="3" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
                         <PasswordBox x:Name="txtConfirmPassword" Grid.Row="3" Grid.Column="1" Width="200" Margin="5"/>
@@ -40,7 +40,7 @@
                     </Grid>
                 </Grid>
             </TabItem>
-            <!-- Admin Actions Tab -->
+            <!-- Вкладка администратора -->
             <TabItem Header="Admin Actions" x:Name="adminTab">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="20">
@@ -78,7 +78,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <!-- Password Cracking Tab -->
+            <!-- Дополнительные вкладки можно добавить при необходимости -->
         </TabControl>
     </Grid>
 </Window>

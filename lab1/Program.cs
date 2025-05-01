@@ -5,22 +5,14 @@ class PasswordCrackerEstimator
 {
     static void Main()
     {
-        Console.Write("Введите пароль: ");
-        string password = Console.ReadLine();
-
-        Console.Write("Введите скорость перебора (паролей в секунду): ");
-        BigInteger speed = BigInteger.Parse(Console.ReadLine());
-
-        Console.Write("Введите количество неудачных попыток до паузы: ");
-        BigInteger attemptsBeforePause = BigInteger.Parse(Console.ReadLine());
-
-        Console.Write("Введите время паузы (в секундах): ");
-        BigInteger pauseTime = BigInteger.Parse(Console.ReadLine());
+        string password = Prompt("Введите пароль: ");
+        BigInteger speed = PromptBigInteger("Введите скорость перебора (паролей в секунду): ");
+        BigInteger attemptsBeforePause = PromptBigInteger("Введите количество неудачных попыток до паузы: ");
+        BigInteger pauseTime = PromptBigInteger("Введите время паузы (в секундах): ");
 
         int alphabetSize = GetAlphabetSize(password);
         BigInteger totalCombinations = BigInteger.Pow(alphabetSize, password.Length);
         BigInteger baseTimeSeconds = totalCombinations / speed;
-
         BigInteger pauseCount = (totalCombinations - 1) / attemptsBeforePause;
         BigInteger totalTimeSeconds = baseTimeSeconds + pauseCount * pauseTime;
 
@@ -29,11 +21,26 @@ class PasswordCrackerEstimator
         Console.WriteLine($"Примерное время подбора: {FormatTime(totalTimeSeconds)}");
     }
 
+    static string Prompt(string message)
+    {
+        Console.Write(message);
+        return Console.ReadLine() ?? string.Empty;
+    }
+
+    static BigInteger PromptBigInteger(string message)
+    {
+        while (true)
+        {
+            Console.Write(message);
+            if (BigInteger.TryParse(Console.ReadLine(), out var value) && value >= 0)
+                return value;
+            Console.WriteLine("Ошибка ввода. Введите положительное число.");
+        }
+    }
+
     static int GetAlphabetSize(string password)
     {
         bool hasLower = false, hasUpper = false, hasDigits = false, hasSpecial = false;
-        int size = 0;
-
         foreach (char c in password)
         {
             if (char.IsLower(c)) hasLower = true;
@@ -41,12 +48,11 @@ class PasswordCrackerEstimator
             else if (char.IsDigit(c)) hasDigits = true;
             else hasSpecial = true;
         }
-
+        int size = 0;
         if (hasLower) size += 26;
         if (hasUpper) size += 26;
         if (hasDigits) size += 10;
         if (hasSpecial) size += 33;
-
         return size;
     }
 
@@ -62,7 +68,6 @@ class PasswordCrackerEstimator
         totalSeconds %= 3600;
         int minutes = (int)(totalSeconds / 60);
         int seconds = (int)(totalSeconds % 60);
-
         return $"{years} лет, {months} месяцев, {days} дней, {hours} часов, {minutes} минут, {seconds} секунд";
     }
 }

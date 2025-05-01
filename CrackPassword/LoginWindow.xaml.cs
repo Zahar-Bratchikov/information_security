@@ -2,20 +2,18 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Numerics;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using Microsoft.Win32; // Для OpenFileDialog
+using Microsoft.Win32;
 
 namespace CrackPassword
 {
-    // Окно для логина с дополнительным функционалом подбора пароля (Dictionary и Brute Force)
+    /// <summary>
+    /// Логика взаимодействия для LoginWindow.xaml
+    /// </summary>
     public partial class LoginWindow : Window
     {
         private int loginAttempts = 0;
@@ -27,95 +25,106 @@ namespace CrackPassword
         public LoginWindow()
         {
             InitializeComponent();
-            cmbCrackType.SelectedIndex = 1; 
+            cmbCrackType.SelectedIndex = 0;
+            // Поле имени оставляем пустым, чтобы пользователь ввёл нужное имя
         }
 
-        // Обработка нажатия кнопки Login
+        // Обработчик кнопки Login – выполняется аутентификация с использованием хэширования пароля
         private void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
             string name = txtName.Text;
             string password = txtPassword.Password;
-            var user = UserManager.GetUser(name);
-            if (user == null)
+            if (CheckLogin(name, password))
             {
-                MessageBox.Show("User not found.");
-                return;
-            }
-            if (user.IsBlocked)
-            {
-                MessageBox.Show("This user is blocked.");
-                return;
-            }
-            string hashedPassword = UserManager.ComputeHash(password);
-            if (user.PasswordHash != hashedPassword)
-            {
-                loginAttempts++;
-                if (loginAttempts >= 3)
+                User currentUser = UserManager.GetUser(name);
+                if (currentUser == null)
                 {
-                    MessageBox.Show("Too many incorrect attempts. Exiting application.");
-                    Application.Current.Shutdown();
+                    MessageBox.Show("User not found.");
+                    return;
                 }
-                else
-                {
-                    MessageBox.Show("Incorrect password.");
-                }
-                return;
+                MainWindow mainWindow = new MainWindow(currentUser);
+                mainWindow.Show();
+                this.Close();
             }
-            // При успешном входе открываем MainWindow
-            MainWindow mainWindow = new MainWindow(user);
-            mainWindow.Show();
-            this.Close();
+            //else
+            //{
+            //    loginAttempts++;
+            //    if (loginAttempts >= 3)
+            //    {
+            //        MessageBox.Show("Слишком много неверных попыток. Приложение будет закрыто.");
+            //        Application.Current.Shutdown();
+            //    }
+            //    else
+            //    {
+            //        MessageBox.Show("Неверный пароль.");
+            //    }
+            //}
         }
 
-        // Открытие диалога выбора файла словаря
+        // Метод для проверки пользователя. Введённый пароль хэшируется и сравнивается с сохранённым хэшом.
+        private bool CheckLogin(string username, string password)
+        {
+            User user = UserManager.GetUser(username);
+            if (user == null)
+                return false;
+            // Если пользователь заблокирован, вход не разрешается
+            if (user.IsBlocked)
+            {
+                MessageBox.Show("User is blocked.");
+                return false;
+            }
+            return UserManager.VerifyPassword(password, user.Password);
+        }
+
+        // Обработчик выбора файла словаря для Dictionary Attack
         private void BtnBrowseDictionary_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
-            openFileDialog.Title = "Select Dictionary File";
+            openFileDialog.Filter = "Текстовые файлы (*.txt)|*.txt|Все файлы (*.*)|*.*";
+            openFileDialog.Title = "Выберите файл словаря";
             if (openFileDialog.ShowDialog() == true)
             {
                 txtDictionaryPath.Text = openFileDialog.FileName;
             }
         }
 
-        // Запуск процесса подбора пароля
+        // Метод, имитирующий нажатие кнопки Login при переборе кандидатов (автоматизация)
+        private async Task<bool> TryLoginCandidate(string candidatePassword)
+        {
+            return await Dispatcher.InvokeAsync(async () =>
+            {
+                txtPassword.Password = candidatePassword;
+                BtnLogin_Click(null, null);
+                await Task.Delay(100);
+                return !this.IsVisible;
+            }).Task.Unwrap();
+        }
+
+        // Обработчик перебора паролей (Dictionary Attack или Brute Force)
         private async void BtnCrackPassword_Click(object sender, RoutedEventArgs e)
         {
             if (isCracking)
             {
-                MessageBox.Show("Cracking already in progress.");
+                MessageBox.Show("Процесс подбора уже запущен.");
                 return;
             }
             isCracking = true;
             crackCancellationTokenSource = new CancellationTokenSource();
             crackingStopwatch = new Stopwatch();
-            var user = UserManager.GetUser(txtName.Text);
-            if (user == null)
-            {
-                MessageBox.Show("User not found.");
-                isCracking = false;
-                return;
-            }
-            string targetPasswordHash = user.PasswordHash;
-            string crackType = ((ComboBoxItem)cmbCrackType.SelectedItem).Content.ToString();
 
-            // Если выбран метод Dictionary Attack, считываем путь из TextBox
-            string dictionaryPath;
+            string crackType = ((ComboBoxItem)cmbCrackType.SelectedItem).Content.ToString();
+            string dictionaryPath = "";
+
             if (crackType.StartsWith("Dictionary"))
             {
                 dictionaryPath = string.IsNullOrWhiteSpace(txtDictionaryPath.Text)
-                    ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dictionary.txt")
+                    ? System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dictionary.txt")
                     : txtDictionaryPath.Text;
-            }
-            else
-            {
-                dictionaryPath = "";
             }
 
             if (!int.TryParse(txtMaxLength.Text, out int maxLength) || maxLength <= 0)
             {
-                MessageBox.Show("Invalid max length.");
+                MessageBox.Show("Некорректное значение максимальной длины.");
                 isCracking = false;
                 return;
             }
@@ -126,105 +135,81 @@ namespace CrackPassword
 
             if (crackType.StartsWith("Dictionary"))
             {
-                crackedPassword = await DictionaryAttack(targetPasswordHash, dictionaryPath, crackCancellationTokenSource.Token);
+                crackedPassword = await DictionaryAttack(dictionaryPath, crackCancellationTokenSource.Token);
             }
             else if (crackType.StartsWith("Brute Force"))
             {
                 string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-                crackedPassword = await BruteForceCrack(targetPasswordHash, charset, maxLength, crackCancellationTokenSource.Token);
+                crackedPassword = await BruteForceCrack(charset, maxLength, crackCancellationTokenSource.Token);
             }
 
             crackingStopwatch.Stop();
             TimeSpan ts = crackingStopwatch.Elapsed;
+
             if (crackedPassword != null)
             {
-                // Устанавливаем найденный пароль в поле для входа
-                txtPassword.Password = crackedPassword;
-                // Сначала открываем MainWindow
-                MainWindow mainWindow = new MainWindow(user);
-                mainWindow.Show();
-                // Затем, после загрузки MainWindow, выводим диалог с информацией о подборе пароля
-                await mainWindow.Dispatcher.BeginInvoke(new Action(() =>
+                Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    MessageBox.Show(mainWindow,
-                        $"Password cracked! The password is: {crackedPassword}\n" +
-                        $"Time: {ts.TotalSeconds:F3} sec\n" +
-                        $"Speed: {(double)attempts / ts.TotalSeconds:F2} attempts/sec",
-                        "Cracking Results");
+                    MessageBox.Show(
+                        $"Пароль подобран! Это: {crackedPassword}\n" +
+                        $"Время: {ts.TotalSeconds:F3} сек\n" +
+                        $"Скорость: {(double)attempts / ts.TotalSeconds:F2} попыток/сек",
+                        "Результаты подбора");
                 }), DispatcherPriority.ApplicationIdle);
-                this.Close();
             }
             else
             {
-                MessageBox.Show($"Password not cracked.\nTime: {ts.TotalSeconds:F3} sec\nSpeed: {(double)attempts / ts.TotalSeconds:F2} attempts/sec");
+                MessageBox.Show($"Пароль не подобран.\nВремя: {ts.TotalSeconds:F3} сек\n" +
+                                $"Скорость: {(double)attempts / ts.TotalSeconds:F2} попыток/сек");
             }
             isCracking = false;
         }
 
-        // Подбор пароля с помощью словаря с транслитерацией
-        private async Task<string> DictionaryAttack(string targetHash, string dictionaryPath, CancellationToken cancellationToken)
+        // Словарный перебор (Dictionary Attack)
+        private async Task<string> DictionaryAttack(string dictionaryPath, CancellationToken cancellationToken)
         {
-            return await Task.Run(() =>
+            if (!File.Exists(dictionaryPath))
             {
-                if (!File.Exists(dictionaryPath))
+                Dispatcher.Invoke(() =>
                 {
-                    Dispatcher.Invoke(() =>
-                    {
-                        MessageBox.Show($"Dictionary file not found: {dictionaryPath}");
-                    });
+                    MessageBox.Show($"Файл словаря не найден: {dictionaryPath}");
+                });
+                return null;
+            }
+
+            string[] dictionary = File.ReadAllLines(dictionaryPath);
+            foreach (string word in dictionary)
+            {
+                if (cancellationToken.IsCancellationRequested)
                     return null;
-                }
-                string[] dictionary = File.ReadAllLines(dictionaryPath);
-                foreach (string word in dictionary)
+                string candidate = Translit(word.Trim().ToLower());
+                attempts++;
+                bool success = await TryLoginCandidate(candidate);
+                if (success)
+                    return candidate;
+            }
+            return null;
+        }
+
+        // Полный перебор (Brute Force)
+        private async Task<string> BruteForceCrack(string charset, int maxLength, CancellationToken cancellationToken)
+        {
+            for (int length = 1; length <= maxLength; length++)
+            {
+                foreach (string combination in GetCombinations(charset, length, cancellationToken))
                 {
                     if (cancellationToken.IsCancellationRequested)
                         return null;
-                    string transliteratedWord = Translit(word.Trim().ToLower());
-                    string hash = UserManager.ComputeHash(transliteratedWord);
                     attempts++;
-                    if (attempts % 1000 == 0)
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            txtPassword.Password = transliteratedWord;
-                        });
-                    }
-                    if (hash == targetHash)
-                        return transliteratedWord;
+                    bool success = await TryLoginCandidate(combination);
+                    if (success)
+                        return combination;
                 }
-                return null;
-            }, cancellationToken);
+            }
+            return null;
         }
 
-        // Подбор пароля методом полного перебора (Brute Force)
-        private async Task<string> BruteForceCrack(string targetHash, string charset, int maxLength, CancellationToken cancellationToken)
-        {
-            return await Task.Run(() =>
-            {
-                for (int length = 1; length <= maxLength; length++)
-                {
-                    foreach (string combination in GetCombinations(charset, length, cancellationToken))
-                    {
-                        if (cancellationToken.IsCancellationRequested)
-                            return null;
-                        string hash = UserManager.ComputeHash(combination);
-                        attempts++;
-                        if (attempts % 100000 == 0)
-                        {
-                            Dispatcher.Invoke(() =>
-                            {
-                                txtPassword.Password = combination;
-                            });
-                        }
-                        if (hash == targetHash)
-                            return combination;
-                    }
-                }
-                return null;
-            }, cancellationToken);
-        }
-
-        // Рекурсивная генерация комбинаций символов с проверкой отмены
+        // Генерация комбинаций символов рекурсивно
         private IEnumerable<string> GetCombinations(string charset, int length, CancellationToken cancellationToken)
         {
             if (length == 1)
@@ -257,21 +242,21 @@ namespace CrackPassword
         {
             var map = new Dictionary<char, char>
             {
-                {'а', 'f'}, {'б', ','}, {'в', 'd'}, {'г', 'u'}, {'д', 'l'},
-                {'е', 't'}, {'ё', '`'}, {'ж', ';'}, {'з', 'p'}, {'и', 'b'},
-                {'й', 'q'}, {'к', 'r'}, {'л', 'k'}, {'м', 'v'}, {'н', 'y'},
-                {'о', 'j'}, {'п', 'g'}, {'р', 'h'}, {'с', 'c'}, {'т', 'n'},
-                {'у', 'e'}, {'ф', 'a'}, {'х', '['}, {'ц', 'w'}, {'ч', 'x'},
-                {'ш', 'i'}, {'щ', 'o'}, {'ь', 'm'}, {'ы', 's'}, {'ъ', ']'},
-                {'э', '\''}, {'ю', '.'}, {'я', 'z'}
+                { 'а', 'f' }, { 'б', ',' }, { 'в', 'd' }, { 'г', 'u' }, { 'д', 'l' },
+                { 'е', 't' }, { 'ё', '`' }, { 'ж', ';' }, { 'з', 'p' }, { 'и', 'b' },
+                { 'й', 'q' }, { 'к', 'r' }, { 'л', 'k' }, { 'м', 'v' }, { 'н', 'y' },
+                { 'о', 'j' }, { 'п', 'g' }, { 'р', 'h' }, { 'с', 'c' }, { 'т', 'n' },
+                { 'у', 'e' }, { 'ф', 'a' }, { 'х', '[' }, { 'ц', 'w' }, { 'ч', 'x' },
+                { 'ш', 'i' }, { 'щ', 'o' }, { 'ь', 'm' }, { 'ы', 's' }, { 'ъ', ']' },
+                { 'э', '\'' }, { 'ю', '.' }, { 'я', 'z' }
             };
-            var sb = new StringBuilder(input.Length);
+            var sb = new System.Text.StringBuilder(input.Length);
             foreach (char c in input)
                 sb.Append(map.ContainsKey(c) ? map[c] : c);
             return sb.ToString();
         }
 
-        // Отмена процесса подбора пароля
+        // Отмена процесса перебора пароля
         private void BtnCancelCrack_Click(object sender, RoutedEventArgs e)
         {
             if (isCracking && crackCancellationTokenSource != null)
@@ -281,7 +266,7 @@ namespace CrackPassword
             }
         }
 
-        // При закрытии окна отменяем все запущенные асинхронные процессы
+        // При закрытии окна отменяются все запущенные процессы
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);

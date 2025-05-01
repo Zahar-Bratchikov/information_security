@@ -1,0 +1,31 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+type: always
+title: Strict Coding Standards
+description: Enforce strict and immutable coding rules to ensure production-quality results.
+---
+
+# Strict Coding Standards
+
+## Main Rules
+
+1. **Never delete or modify existing working functionality** unless it is explicitly required by the technical specification (TS).
+2. **Do not write temporary, demo, or placeholder functions.** Always provide complete, production-ready implementations.
+3. **Do not add comments suggesting future rewrites or improvements** (e.g., "this is a demo function, should be rewritten later").
+4. **Strictly follow the technical specification.** Do not improvise, guess, or add anything not clearly required.
+5. **Avoid unnecessary changes** to already working code.
+6. **Respect and follow the existing architecture and code style** of the project.
+7. **Ensure proper integration with the existing codebase.** Do not create isolated stubs or mockups.
+8. **Do not propose alternative solutions** unless explicitly requested by the technical specification.
+9. **All responses, comments must be written in Russian.**
+10. **Make sure new code does not break existing functionality** before finalizing the changes.
+
+## Notes
+
+- The main priorities are stability, cleanliness, and production readiness.
+- These rules are mandatory and must be followed by the AI in all tasks.
+- They help maintain high code quality, reliability, and consistency.

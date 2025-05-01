@@ -1,20 +1,12 @@
-﻿using System.Text.Json.Serialization;
-
-namespace CrackPassword
+﻿namespace CrackPassword
 {
-    // Класс, представляющий пользователя
     public class User
     {
-        // Имя пользователя
         public string Name { get; set; }
-        // SHA256-хэш пароля пользователя
-        public string PasswordHash { get; set; }
-        // Флаг, указывающий, заблокирован ли пользователь
-        public bool IsBlocked { get; set; } = false;
-        // Ограничения на пароль пользователя
-        public PasswordRestrictions PasswordRestrictions { get; set; } = new PasswordRestrictions();
-
-        // Переопределение ToString для корректного отображения имени в списках
+        // Пароль хранится в виде SHA256-хэша
+        public string Password { get; set; }
+        public PasswordRestrictions PasswordRestrictions { get; set; }
+        public bool IsBlocked { get; set; }
         public override string ToString() => Name;
     }
 }

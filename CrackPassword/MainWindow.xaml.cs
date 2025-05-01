@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Numerics; // Ensure you have referenced System.Numerics
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 
 namespace CrackPassword
 {
-    // Главное окно с вкладками для Change Password, Admin Actions и Password Cracking
+    /// <summary>
+    /// Логика взаимодействия для MainWindow.xaml
+    /// </summary>
     public partial class MainWindow : Window
     {
         private User currentUser;
@@ -24,11 +20,10 @@ namespace CrackPassword
             currentUser = user;
             Title = $"Main Window - Welcome, {currentUser.Name}";
 
-            // Если пользователь не ADMIN, удаляем вкладки Admin Actions и Password Cracking
+            // Если пользователь не ADMIN, удаляем вкладку Admin Actions
             if (!currentUser.Name.Equals("ADMIN", StringComparison.OrdinalIgnoreCase))
             {
                 tabControl.Items.Remove(adminTab);
-                //tabControl.Items.Remove(passwordCrackingTab);
             }
             else
             {
@@ -37,7 +32,7 @@ namespace CrackPassword
             LoadUsers();
         }
 
-        // Загрузка пользователей в ListBox
+        // Загрузка пользователей из UserManager
         private void LoadUsers()
         {
             lstUsers.Items.Clear();
@@ -45,29 +40,39 @@ namespace CrackPassword
                 lstUsers.Items.Add(user);
         }
 
-        // Обработка нажатия кнопки Change Password
+        // Обработка изменения пароля
         private void BtnChangePassword_Click(object sender, RoutedEventArgs e)
         {
             string oldPass = txtOldPassword.Password;
             string newPass = txtNewPassword.Password;
             string confirmPass = txtConfirmPassword.Password;
+
+            // Проверка совпадения нового пароля с подтверждением
             if (newPass != confirmPass)
             {
                 MessageBox.Show("Passwords do not match.");
                 return;
             }
+
+            // Проверка соответствия нового пароля требованиям
             if (!UserManager.ValidatePassword(newPass, currentUser.PasswordRestrictions))
             {
                 MessageBox.Show("New password does not meet requirements.");
                 return;
             }
+
+            // Попытка смены пароля (учитывается хэширование)
             if (UserManager.ChangePassword(currentUser.Name, oldPass, newPass))
+            {
                 MessageBox.Show("Password changed successfully.");
+            }
             else
+            {
                 MessageBox.Show("Incorrect old password.");
+            }
         }
 
-        // Обработка нажатия кнопки Logout
+        // Выход из системы
         private void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
             LoginWindow loginWindow = new LoginWindow();
@@ -75,7 +80,7 @@ namespace CrackPassword
             this.Close();
         }
 
-        // Обработка добавления нового пользователя
+        // Добавление нового пользователя
         private void BtnAddUser_Click(object sender, RoutedEventArgs e)
         {
             InputDialog dlg = new InputDialog("Enter user name:", "Add User");
@@ -85,6 +90,7 @@ namespace CrackPassword
                 string userName = dlg.ResponseText;
                 if (!string.IsNullOrWhiteSpace(userName) && UserManager.GetUser(userName) == null)
                 {
+                    // Новый пользователь создается с дефолтным паролем "defaultPassword"
                     UserManager.AddUser(userName, "defaultPassword");
                     LoadUsers();
                 }
@@ -95,7 +101,7 @@ namespace CrackPassword
             }
         }
 
-        // Обработка блокировки пользователя
+        // Блокировка пользователя
         private void BtnBlockUser_Click(object sender, RoutedEventArgs e)
         {
             if (lstUsers.SelectedItem != null)
@@ -112,7 +118,7 @@ namespace CrackPassword
             }
         }
 
-        // Обработка разблокировки пользователя
+        // Разблокировка пользователя
         private void BtnUnblockUser_Click(object sender, RoutedEventArgs e)
         {
             if (lstUsers.SelectedItem != null)
@@ -124,7 +130,7 @@ namespace CrackPassword
             }
         }
 
-        // Обновление требований к паролю
+        // Обновление требований к паролю для выбранного пользователя
         private void BtnUpdateRequirements_Click(object sender, RoutedEventArgs e)
         {
             if (lstUsers.SelectedItem == null)
@@ -170,13 +176,13 @@ namespace CrackPassword
             }
         }
 
-        // Обработчик события PasswordChanged для поля нового пароля
+        // Событие изменения введённого нового пароля для оценки его прочности
         private void TxtNewPassword_PasswordChanged(object sender, RoutedEventArgs e)
         {
             UpdatePasswordStrength();
         }
 
-        // Обновление оценки времени взлома нового пароля
+        // Расчёт предполагаемого времени взлома пароля
         private void UpdatePasswordStrength()
         {
             string password = txtNewPassword.Password;
@@ -187,7 +193,7 @@ namespace CrackPassword
             }
             int alphabetSize = GetAlphabetSize(password);
             BigInteger totalCombinations = BigInteger.Pow(alphabetSize, password.Length);
-            BigInteger speed = 150000; 
+            BigInteger speed = 150000;
             BigInteger timeSec = totalCombinations / speed;
             string formattedTime = FormatTime(timeSec);
 
@@ -203,7 +209,7 @@ namespace CrackPassword
             txtPasswordEstimate.Text = $"Estimated cracking time: {formattedTime}\nPassword Strength: {strength}";
         }
 
-        // Метод расчета размера алфавита символов пароля
+        // Метод определения размера используемого алфавита
         private int GetAlphabetSize(string password)
         {
             bool hasLower = password.Any(char.IsLower);
@@ -218,7 +224,7 @@ namespace CrackPassword
             return size;
         }
 
-        // Форматирование времени взлома в читаемый формат
+        // Форматирование времени взлома в читаемый вид
         private string FormatTime(BigInteger totalSeconds)
         {
             BigInteger years = totalSeconds / (365 * 24 * 3600);
