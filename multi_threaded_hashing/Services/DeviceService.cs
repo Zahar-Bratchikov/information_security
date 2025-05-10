@@ -21,15 +21,16 @@ namespace multi_threaded_hashing.Services
                     Description = "Основной процессор",
                     IsAvailable = true,
                     PerformanceScore = 100
-                },
-                new Device
-                {
-                    Id = "2",
-                    Name = "GPU",
-                    Description = "Графический процессор",
-                    IsAvailable = true,
-                    PerformanceScore = 200
                 }
+                //},
+                //new Device
+                //{
+                //    Id = "2",
+                //    Name = "GPU",
+                //    Description = "Графический процессор",
+                //    IsAvailable = true,
+                //    PerformanceScore = 200
+                //}
             };
         }
 

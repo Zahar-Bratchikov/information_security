@@ -11,5 +11,6 @@ namespace multi_threaded_hashing.Services.Interfaces
         Task<string> ComputeHashStringAsync(string input, HashAlgorithm algorithm);
         Task<byte[][]> ComputeHashesParallelAsync(string[] inputs, HashAlgorithm algorithm, int threadCount, CancellationToken cancellationToken = default);
         Task<string> ComputeHashAsync(string input, HashAlgorithm algorithm, int threadCount, CancellationToken cancellationToken);
+        string ComputeHashStringSync(string input, HashAlgorithm algorithm);
     }
 }

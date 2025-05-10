@@ -1205,14 +1205,27 @@ namespace multi_threaded_hashing.ViewModels
                 LogText += "Ошибка: Введите хеш для подбора\n";
                 return;
             }
+            if (string.IsNullOrEmpty(Alphabet))
+            {
+                Status = "Укажите алфавит для перебора";
+                LogText += "Ошибка: Укажите алфавит для перебора\n";
+                return;
+            }
+            if (MinLength <= 0 || MaxLength < MinLength)
+            {
+                Status = "Укажите корректные значения длины строки";
+                LogText += "Ошибка: Некорректные значения длины строки\n";
+                return;
+            }
 
             IsProcessing = true;
             Status = "Тестирование производительности брутфорса...";
             LogText += $"Начато тестирование производительности брутфорса\n";
+            FoundPassword = string.Empty;
+            Result = string.Empty;
 
             try
             {
-                // Создаем новый токен отмены для каждой операции
                 if (_cancellationTokenSource.IsCancellationRequested)
                 {
                     _cancellationTokenSource.Dispose();
@@ -1220,20 +1233,8 @@ namespace multi_threaded_hashing.ViewModels
                 }
 
                 var results = new List<BruteForcePerformanceResult>();
-                var maxThreads = Math.Min(Environment.ProcessorCount, 8); // Ограничиваем количество потоков
-
-                // Определяем небольшой хеш для тестирования
-                var testHash = await _hashService.ComputeHashStringAsync("test", SelectedAlgorithm);
-
-                // Сохраняем оригинальные настройки
-                var originalHash = TargetHash;
-                var originalMinLength = MinLength;
-                var originalMaxLength = MaxLength;
-
-                // Устанавливаем тестовые параметры - для быстрого тестирования
-                TargetHash = testHash;
-                MinLength = 1;
-                MaxLength = 4;
+                var maxThreads = Math.Min(Environment.ProcessorCount, 12);
+                string? lastFoundPassword = null;
 
                 for (int threads = 1; threads <= maxThreads; threads++)
                 {
@@ -1242,13 +1243,9 @@ namespace multi_threaded_hashing.ViewModels
 
                     Status = $"Тестирование брутфорса ({threads} потоков)...";
                     LogText += $"Тестирование брутфорса: {threads} потоков\n";
-
-                    // Устанавливаем количество потоков для этого прохода
                     ThreadCount = threads;
 
-                    // Запускаем тестовый брутфорс с ограниченным временем
                     var startTime = DateTime.Now;
-                    bool timeout = false;
                     var settings = new BruteForceSettings
                     {
                         TargetHash = TargetHash,
@@ -1259,80 +1256,55 @@ namespace multi_threaded_hashing.ViewModels
                         MaxLength = MaxLength
                     };
 
-                    // Создаем таймаут для теста - не более 10 секунд на каждый тест
-                    using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
-                    using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                        cts.Token, _cancellationTokenSource.Token))
+                    try
                     {
-                        try
-                        {
-                            await _bruteForceService.StartBruteForceAsync(settings, linkedCts.Token);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            if (cts.IsCancellationRequested && !_cancellationTokenSource.IsCancellationRequested)
-                            {
-                                timeout = true;
-                            }
-                            else
-                            {
-                                throw;
-                            }
-                        }
-                    }
-
-                    var endTime = DateTime.Now;
-                    var duration = (endTime - startTime).TotalMilliseconds;
-
-                    if (!timeout)
-                    {
+                        var found = await _bruteForceService.StartBruteForceAsync(settings, _cancellationTokenSource.Token);
+                        var endTime = DateTime.Now;
+                        var duration = (endTime - startTime).TotalMilliseconds;
                         results.Add(new BruteForcePerformanceResult
                         {
                             ThreadCount = threads,
                             Duration = duration,
                             Algorithm = SelectedAlgorithm.ToString()
                         });
-                    }
-                    else
-                    {
-                        // Если был таймаут, записываем приблизительное значение
-                        LogText += $"Тест для {threads} потоков прерван по таймауту\n";
-                        results.Add(new BruteForcePerformanceResult
+                        if (!string.IsNullOrEmpty(found))
                         {
-                            ThreadCount = threads,
-                            Duration = 10000, // 10 секунд
-                            Algorithm = SelectedAlgorithm.ToString()
-                        });
+                            LogText += $"Успех! Найден пароль: {found}\nВремя подбора: {duration / 1000.0:F2} сек\n";
+                            FoundPassword = found;
+                            Result = $"Найден пароль: {found}";
+                            lastFoundPassword = found;
+                        }
+                        else
+                        {
+                            LogText += $"Пароль не найден. Время работы: {duration / 1000.0:F2} сек\n";
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        LogText += $"Тест для {threads} потоков отменён пользователем\n";
                     }
 
-                    // Обновляем прогресс
                     ProgressValue = (int)((double)threads / maxThreads * 100);
-
-                    // Небольшая пауза между тестами
-                    await Task.Delay(500, _cancellationTokenSource.Token);
+                    await Task.Delay(200, _cancellationTokenSource.Token);
                 }
 
-                // Восстанавливаем оригинальные настройки
-                TargetHash = originalHash;
-                MinLength = originalMinLength;
-                MaxLength = originalMaxLength;
-
-                // Сохраняем результаты и обновляем график
                 BruteForcePerformanceResults = results;
                 UpdateBruteForceChartSeries();
 
                 Status = "Тестирование производительности брутфорса завершено";
                 LogText += $"Тестирование производительности брутфорса завершено\n";
 
-                // Определяем оптимальное количество потоков
                 if (results.Count > 0)
                 {
                     var optimalResult = results.OrderBy(r => r.Duration).First();
                     LogText += $"Лучший результат: {optimalResult.ThreadCount} потоков - {optimalResult.Duration:F2} мс\n";
                     LogText += $"Рекомендуемое количество потоков для брутфорса: {optimalResult.ThreadCount}\n";
-
-                    // Устанавливаем оптимальное количество потоков
                     ThreadCount = optimalResult.ThreadCount;
+                    // Показываем окошко с результатом
+                    string message = $"Тестирование завершено!\nРекомендуемое количество потоков: {optimalResult.ThreadCount}";
+                    if (!string.IsNullOrEmpty(lastFoundPassword))
+                        message += $"\nПоследний найденный пароль: {lastFoundPassword}";
+                    MessageBox.Show(message, "Тестирование завершено", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (OperationCanceledException)

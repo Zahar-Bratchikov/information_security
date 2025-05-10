@@ -1,6 +1,8 @@
 ﻿using multi_threaded_hashing.Models;
 using multi_threaded_hashing.Services.Interfaces;
 using System.Windows;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace multi_threaded_hashing.Services
 {
@@ -81,43 +83,45 @@ namespace multi_threaded_hashing.Services
         {
             var totalCombinations = (long)Math.Pow(alphabet.Length, length);
 
-            // Если поток только один, используем прямой перебор
             if (threadCount <= 1)
             {
-                return await BruteForceRange(alphabet, length, targetHash, algorithm, 0, totalCombinations, cancellationToken);
+                return await Task.Run(() => BruteForceRange(alphabet, length, targetHash, algorithm, 0, totalCombinations, cancellationToken));
             }
 
-            // Оптимизируем количество потоков
             int effectiveThreadCount = OptimizeThreadCount(threadCount, totalCombinations);
-
-            // Комбинации на поток
             var combinationsPerThread = totalCombinations / effectiveThreadCount;
-
             var tasks = new List<Task<string>>();
+            var startEvent = new System.Threading.ManualResetEventSlim(false);
+
             for (int i = 0; i < effectiveThreadCount; i++)
             {
                 var startIndex = i * combinationsPerThread;
                 var endIndex = (i == effectiveThreadCount - 1) ? totalCombinations : startIndex + combinationsPerThread;
-                tasks.Add(Task.Run(() => BruteForceRange(
-                    alphabet,
-                    length,
-                    targetHash,
-                    algorithm,
-                    startIndex,
-                    endIndex,
-                    cancellationToken)));
+                int coreIndex = i % System.Environment.ProcessorCount;
+                tasks.Add(Task.Run(() => {
+                    ThreadAffinityHelper.SetThreadAffinity(coreIndex);
+                    startEvent.Wait(); // Ждём сигнала старта
+                    return BruteForceRange(
+                        alphabet,
+                        length,
+                        targetHash,
+                        algorithm,
+                        startIndex,
+                        endIndex,
+                        cancellationToken);
+                }));
             }
 
-            // Ожидаем завершения всех задач или нахождения результата
+            // Все потоки готовы, даём сигнал на старт
+            startEvent.Set();
+
             while (tasks.Count > 0)
             {
                 var completedTask = await Task.WhenAny(tasks);
                 tasks.Remove(completedTask);
-
                 var result = await completedTask;
                 if (!string.IsNullOrEmpty(result))
                 {
-                    // Отменяем оставшиеся задачи и возвращаем найденный результат
                     cancellationToken.ThrowIfCancellationRequested();
                     return result;
                 }
@@ -138,7 +142,7 @@ namespace multi_threaded_hashing.Services
             return Math.Min(requestedThreadCount, Environment.ProcessorCount + 1);
         }
 
-        private async Task<string> BruteForceRange(
+        private string BruteForceRange(
             char[] alphabet,
             int length,
             string targetHash,
@@ -172,8 +176,8 @@ namespace multi_threaded_hashing.Services
                         GenerateCombination(j, current, alphabet, alphabetLength);
 
                         var attempt = new string(current);
-                        var hash = await _hashService.ComputeHashStringAsync(attempt, algorithm);
-
+                        // Используем синхронный вариант для CPU-bound
+                        var hash = _hashService.ComputeHashStringSync(attempt, algorithm);
                         if (hash.Equals(targetHash, StringComparison.OrdinalIgnoreCase))
                         {
                             return attempt;
